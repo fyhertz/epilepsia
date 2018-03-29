@@ -1,0 +1,23 @@
+# qtcreator generated files
+*.creator.user*
+*.pro.user*
+*.creator
+*.files
+*.includes
+*.config
+
+# Compiled Object files
+*.o
+*.d
+gen
+
+# Executable
+epilepsia
+g
+en
+
+# Pycharm
+.idea
+
+# Python
+*.pyc
