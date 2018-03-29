@@ -24,7 +24,7 @@ Anyway when building the thing I chose to wire 32 [cheap LM2596 boards](https://
 
 I have not actually tried to push the panel at more than a hundred watts yet.
 
-## Feeding the panel
+### Feeding the panel
 
 The arm firmware starts an [Open Pixel Control server](http://openpixelcontrol.org/) and waits for client to feed frame buffers. The **examples** folder contains some demo clients for the panel.
 
@@ -38,4 +38,4 @@ TODO
  
  ## TODO
  
- * Software estimation of the power consumption.
+ * Software estimation of power consumption.
