@@ -12,7 +12,7 @@ The [LedDisplay](https://github.com/fyhertz/epilepsia/blob/master/arm/leddisplay
 
 The following schematic shows the wiring between the strips, the CD54HC4094s and the PRUs:
 
-![Schematic](http://guigui.us/epilepsia/schematic.png)
+![Schematic](https://raw.githubusercontent.com/fyhertz/epilepsia/master/doc/schematic.png)
 
 ### Supplying power
 
