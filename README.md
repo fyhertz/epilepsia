@@ -20,7 +20,7 @@ According to the [adafruit uberguide](https://learn.adafruit.com/adafruit-neopix
 
 Based upon my tests 80W (16A @ 5V) is already super bright though. So [one 18 AWG](https://www.powerstream.com/Wire_Size.htm) power cable should be enough to power the panel. 
 
-Anyway when building the thing I chose to wire 32 [cheap LM2596 boards](https://www.youtube.com/watch?v=R32zDhGIGyw), one per row, to get between 1 or 2A per row (between 180W and 320W for the display) without too much current in power cables. That was probably overkill and even inefficient considering 80W is already too bright and that those power modules are quite limited. They only have an efficiency of 80% when converting 12V to 5V which is mediocre and they are not very stable.
+Anyway when building the thing I chose to wire 32 [cheap LM2596 boards](https://www.youtube.com/watch?v=R32zDhGIGyw), one per row, to get between 1 or 2A per row (between 180W and 320W for the display) without too much current in power cables. That was probably overkill and even inefficient considering 80W is already too bright and that those power modules are quite limited. They only have an efficiency of 80% when converting 12V to 5V.
 
 I have not actually tried to push the panel at more than a hundred watts yet.
 
