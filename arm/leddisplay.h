@@ -65,8 +65,10 @@ public:
     static const int bytes_per_strip = 120*3;  // 3 bytes per led, 120 leds
     static const int frame_buffer_size = bytes_per_strip*16; // 16 strips
 
-    LedDisplay();
-    ~LedDisplay();
+    static LedDisplay& getInstance() {
+        static LedDisplay instance;
+        return instance;
+    }
 
     uint8_t* getFrameBuffer();
     void start();
@@ -75,6 +77,16 @@ public:
     void clear();
     void printFrameRate();
     void setBrightness(float brightness, bool dithering);
+
+    LedDisplay(LedDisplay const&) = delete;
+    LedDisplay(LedDisplay&&) = delete;
+    LedDisplay& operator=(LedDisplay const&) = delete;
+    LedDisplay& operator=(LedDisplay &&) = delete;
+
+protected:
+
+    LedDisplay();
+    ~LedDisplay();
 
 private:
 

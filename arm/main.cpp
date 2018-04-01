@@ -30,10 +30,10 @@ volatile sig_atomic_t done = 0;
 
 int main(int argc, char *argv[]) {
 
+    LedDisplay& display = LedDisplay::getInstance();
     opc::Source source;
-    LedDisplay display;
 
-    display.setBrightness(0.4f, true);
+    display.setBrightness(0.2f, true);
 
     signal(SIGINT, [](int signum){
         printf("done!\n");
