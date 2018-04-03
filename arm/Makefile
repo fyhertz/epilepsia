@@ -24,7 +24,9 @@ $(shell mkdir -p $(dir $(DEPS)) >/dev/null)
 CXX := arm-linux-gnueabihf-g++
 
 # C++ flags
-CXXFLAGS := -g -Wall -Wextra -O3 -std=c++14 -pthread -static-libstdc++ -static-libgcc
+CXXFLAGS := -Wall -Wextra -O3 -std=c++14 -pthread
+CXXFLAGS += -static-libstdc++ -static-libgcc
+CXXFLAGS += -march=armv7-a -mtune=cortex-a8 -ffast-math -funroll-loops # -mfloat-abi=hard -mfpu=neon
 
 # flags required for dependency generation; passed to compilers
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
@@ -36,6 +38,9 @@ COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) -c -o $@
 POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 all: $(BIN)
+
+debug: CXXFLAGS += -g
+debug: $(BIN)
 
 .PHONY: clean
 clean:

@@ -89,8 +89,8 @@ void LedDisplay::closeSharedMem(){
 }
 
 void LedDisplay::remapBits() {
-    static uint8_t tmp1[frame_buffer_size];
-    static uint8_t tmp2[frame_buffer_size];
+    uint8_t tmp1[frame_buffer_size];
+    uint8_t tmp2[frame_buffer_size];
     uint8_t p;
     uint8_t m = 0;
     uint8_t* frame = frame_[current_buffer];
@@ -104,7 +104,7 @@ void LedDisplay::remapBits() {
         tmp1[i+1] = p;
     }
 
-    // Every too lines of the display is wired upside-down
+    // Every two lines of the display is wired upside-down
     for (auto i=bytes_per_strip/2;i<frame_buffer_size;i+=bytes_per_strip) {
         for (auto j=0;j<bytes_per_strip/4;j+=3) {
             p = tmp1[i+j];
@@ -123,19 +123,20 @@ void LedDisplay::remapBits() {
 
     // We reorder the bits of the buffer for the
     // serial to parallel shift registers
-    for (auto l=0;l<2;l++) {
-        for (auto i=0;i<bytes_per_strip;i++) {
+    for (auto l=0;l<frame_buffer_size;l+=frame_buffer_size/2) {
+        for (auto i=0,ii=0;i<bytes_per_strip;i++,ii+=8) {
             for (auto j=0;j<8;j++) {
                 m = 0;
-                for (auto k=0;k<8;k++) {
-                    p = tmp1[l*frame_buffer_size/2+i+k*bytes_per_strip];
+                for (auto k=0,kk=0;k<8;k++,kk+=bytes_per_strip) {
+                    p = tmp1[l+i+kk];
                     p = lookup_table_[current_buffer][p];
                     m |= ( ( ( p >>(7-j)) & 0x01 ) << (7-k) );
                 }
-                tmp2[l*frame_buffer_size/2+i*8+j] = m;
+                tmp2[l+ii+j] = m;
             }
         }
     }
+
     memcpy(frame, tmp2, frame_buffer_size);
 }
 

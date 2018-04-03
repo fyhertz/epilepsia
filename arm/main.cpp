@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     source.start();
 
     while (!done) {
-        usleep(100);
+        sleep(1);
     }
 
     source.stop();

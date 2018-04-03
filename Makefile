@@ -23,12 +23,17 @@ clean:
 	@${MAKE} -C pru clean
 
 
-.PHONY: reboot run justrun upload 
+.PHONY: reboot run justrun upload_arm upload_pru upload
 
 # Uploads the three binaries to the beaglebone
-upload:
-	scp $(BIN_ARM) $(BIN_PRU_0) $(BIN_PRU_1) $(SSH_HOST):/root/
+upload_pru:
+	scp $(BIN_PRU_0) $(BIN_PRU_1) $(SSH_HOST):/root/
 	ssh $(SSH_HOST) 'su -c "cp /root/am335x-* /lib/firmware"'
+
+upload_arm:
+	scp $(BIN_ARM) $(SSH_HOST):/root/
+
+upload: upload_arm upload_pru
 
 # Reboots PRUs
 reset:

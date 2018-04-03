@@ -71,8 +71,6 @@ public:
     }
 
     uint8_t* getFrameBuffer();
-    void start();
-    void stop();
     void commitFrameBuffer();
     void clear();
     void printFrameRate();
