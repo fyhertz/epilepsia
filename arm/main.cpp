@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     LedDisplay& display = LedDisplay::getInstance();
     opc::Source source;
 
-    display.setBrightness(0.2f, true);
+    display.setBrightness(0.05f, true);
 
     signal(SIGINT, [](int signum){
         printf("done!\n");

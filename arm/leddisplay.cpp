@@ -75,7 +75,7 @@ void LedDisplay::openSharedMem(){
     }
     assert(shared_memory_ != NULL);
 
-    memset(shared_memory_, 0, 12*1024); // reset shared memory
+    //memset(shared_memory_, 0, 12*1024); // reset shared memory
 
     flag_pru_[0] = &shared_memory_[0];
     flag_pru_[1] = &shared_memory_[1];
@@ -89,19 +89,20 @@ void LedDisplay::closeSharedMem(){
 }
 
 void LedDisplay::remapBits() {
+    uint8_t* frame = frame_[current_buffer];
     uint8_t tmp1[frame_buffer_size];
     uint8_t tmp2[frame_buffer_size];
     uint8_t p;
-    uint8_t m = 0;
-    uint8_t* frame = frame_[current_buffer];
 
+    memset(tmp2, 0, frame_buffer_size);
     memcpy(tmp1, frame_buffer_, frame_buffer_size);
 
-    // RGB to GRB
+    // RGB to GRB, gamma correction and brightness adjustment
     for (auto i=0;i<frame_buffer_size;i+=3) {
         p = tmp1[i];
-        tmp1[i] = tmp1[i+1];
-        tmp1[i+1] = p;
+        tmp1[i]   = lookup_table_[current_buffer][tmp1[i+1]];
+        tmp1[i+1] = lookup_table_[current_buffer][p];
+        tmp1[i+2] = lookup_table_[current_buffer][tmp1[i+2]];
     }
 
     // Every two lines of the display is wired upside-down
@@ -123,21 +124,30 @@ void LedDisplay::remapBits() {
 
     // We reorder the bits of the buffer for the
     // serial to parallel shift registers
-    for (auto l=0;l<frame_buffer_size;l+=frame_buffer_size/2) {
-        for (auto i=0,ii=0;i<bytes_per_strip;i++,ii+=8) {
-            for (auto j=0;j<8;j++) {
-                m = 0;
-                for (auto k=0,kk=0;k<8;k++,kk+=bytes_per_strip) {
-                    p = tmp1[l+i+kk];
-                    p = lookup_table_[current_buffer][p];
-                    m |= ( ( ( p >>(7-j)) & 0x01 ) << (7-k) );
+    {
+
+        uint32_t m = 0, n = 0;
+        uint32_t *tmp1r = reinterpret_cast<uint32_t*>(tmp1);
+
+        for (auto l=0,ll=0;l<frame_buffer_size/4;l+=frame_buffer_size/8,ll+=frame_buffer_size/2) {
+            for (auto i=0,ii=0;i<bytes_per_strip/4;i++,ii+=32) {
+                for (auto j=0;j<8;j++) {
+                    m = 0;
+                    for (auto k=0,kk=0;k<8;k++,kk+=bytes_per_strip/4) {
+                        n = tmp1r[l+i+kk];
+                        m |= ( ( ( n >>(7-j)) & 0x01010101 ) << (7-k) );
+                    }
+                    tmp2[ll+ii+j]    = (m >> 0) & 0xFF;
+                    tmp2[ll+ii+8+j]  = (m >> 8) & 0xFF;
+                    tmp2[ll+ii+16+j] = (m >> 16) & 0xFF;
+                    tmp2[ll+ii+24+j] = (m >> 24) & 0xFF;
                 }
-                tmp2[l+ii+j] = m;
             }
         }
     }
 
     memcpy(frame, tmp2, frame_buffer_size);
+
 }
 
 void LedDisplay::printFrameRate() {
