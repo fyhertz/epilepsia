@@ -41,7 +41,9 @@ inline void write_byte_to_spi(uint8_t byte) {
         __R30 &= ~(1<<CLK); // clear
         bit = ( byte >> i ) & 0x01;
         __R30 = (bit<<SDO);
+        __delay_cycles(1);
         __R30 |= 1<<CLK; //set
+        __delay_cycles(1);
     }
     // Latches the register to the 8 parallel outputs
     __R30 |= 1<<LATCH; // set
@@ -74,21 +76,21 @@ void main(void)
         k = !k;
 
         for (j=START;j<START+FRAME_BUFFER_SIZE/2;j++) {
-            write_byte_to_spi(ONES); //150ns
-            __delay_cycles(20); // 100ns
+            write_byte_to_spi(ONES); //230ns
+            __delay_cycles(4); // 20ns
 
-            write_byte_to_spi(frame[k][j]); //150ns
-            __delay_cycles(40); // 200ns
+            write_byte_to_spi(frame[k][j]); //230ns
+            __delay_cycles(24); // 120ns
 
-            write_byte_to_spi(ZEROS); //150ns
-            __delay_cycles(20); // 100ns
+            write_byte_to_spi(ZEROS); //230ns
+            __delay_cycles(4); // 20ns
         }
 
         // The 50 us reset code needed by led strips.
         __R30 = 0;
         __delay_cycles(15000);
 
-        // Wait for PRU to be ready for the next frame
+        // Wait for CPU to be ready for the next frame
         *flag_pru = 1;
         while(*flag_pru == 1) {}
 

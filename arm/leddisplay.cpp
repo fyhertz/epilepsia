@@ -94,7 +94,6 @@ void LedDisplay::remapBits() {
     uint8_t tmp2[frame_buffer_size];
     uint8_t p;
 
-    memset(tmp2, 0, frame_buffer_size);
     memcpy(tmp1, frame_buffer_, frame_buffer_size);
 
     // RGB to GRB, gamma correction and brightness adjustment
@@ -125,7 +124,6 @@ void LedDisplay::remapBits() {
     // We reorder the bits of the buffer for the
     // serial to parallel shift registers
     {
-
         uint32_t m = 0, n = 0;
         uint32_t *tmp1r = reinterpret_cast<uint32_t*>(tmp1);
 
