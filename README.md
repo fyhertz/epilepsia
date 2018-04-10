@@ -15,17 +15,15 @@ The [LedDisplay](https://github.com/fyhertz/epilepsia/blob/master/arm/leddisplay
 
 The following schematic shows the wiring between the strips, the CD54HC4094s and the PRUs:
 
-![Schematic](https://raw.githubusercontent.com/fyhertz/epilepsia/master/doc/schematic.png)
+![Schematic](https://raw.githubusercontent.com/fyhertz/epilepsia/master/schematics/schematic.png)
 
 ### Supplying power
 
-According to the [adafruit uberguide](https://learn.adafruit.com/adafruit-neopixel-uberguide), at full brightness a pixel can consume as much as 60mA. Therefore, the panel could theoretically consume 600W or 115A @ 5V! 
+According to the [adafruit uberguide](https://learn.adafruit.com/adafruit-neopixel-uberguide), at full brightness a pixel can consume as much as 60 mA. Therefore, the panel could theoretically consume 600 W or 115 A @ 5 V! 
 
-Based upon my tests 80W (16A @ 5V) is already super bright though. So [one 18 AWG](https://www.powerstream.com/Wire_Size.htm) power cable should be enough to power the panel. 
+Based upon my tests 80 W (16 A @ 5 V) is already super bright though. So [one 18 AWG](https://www.powerstream.com/Wire_Size.htm) power cable should be enough to power the panel. 
 
-Anyway when building the thing I chose to wire 32 [cheap LM2596 boards](https://www.youtube.com/watch?v=R32zDhGIGyw), one per row, to get between 1 or 2A per row (between 180W and 320W for the display) without too much current in power cables. That was probably overkill and even inefficient considering 80W is already too bright and that those power modules are quite limited. They only have an efficiency of 80% when converting 12V to 5V.
-
-I have not actually tried to push the panel at more than a hundred watts yet.
+On my setup, the strips are wired to two 18 AWG cables which should be enough to distribute 160 W (32 A). They are attached on each side of the panel, one for the even rows and the other for the odd ones. This is to ensure an even weight distribution as well as a more even light distribution (given that the [voltage drops accross each strip](https://learn.adafruit.com/adafruit-neopixel-uberguide/powering-neopixels#distributing-power)).
 
 ### Feeding the panel
 
