@@ -2,6 +2,9 @@
 
 Epilepsia is a fat two square meters LED display built with [Neopixels](https://learn.adafruit.com/adafruit-neopixel-uberguide) (well, WS2812B leds), a [beaglebone black](https://beagleboard.org/black) and a few other components. It has a resolution of 60x32 pixels and can run at a maximum of 250 fps.
 
+![](http://guigui.us/epilepsia/gifs/demo2.gif)
+![](http://guigui.us/epilepsia/gifs/demo1.gif)
+
 ## Architecture
 
 ### Driving the WS2812 led strips
