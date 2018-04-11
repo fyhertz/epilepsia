@@ -12,14 +12,15 @@ from noise import pnoise3
 
 @click.command()
 @click.option('-f', '--framerate', default=120.0, help='Frames per second')
-@click.argument('server')
-def main(server, framerate):
+@click.option('-i', '--ip', default='127.0.0.1', help='OPC server IP address')
+@click.option('-p', '--port', default=7890, help='OPC server port')
+def main(framerate, ip, port):
 
     x_dim = 60
     y_dim = 32
     speed = 2.0
 
-    client = opc.Client(server)
+    client = opc.Client(ip + ':' + str(port))
     frame = np.zeros((y_dim, x_dim, 3), dtype=np.uint8)
 
     dt = 1.0 / framerate
