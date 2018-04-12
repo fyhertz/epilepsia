@@ -137,8 +137,7 @@ uint8_t Source::receive(uint32_t timeout_ms) {
             if (header_length_ == 4 &&
                     payload_length_ == payload_expected) {  /* payload complete */
                 if (header_[1] == SET_PIXELS) {
-                    handler_(header_[0], payload_expected/3,
-                            (Pixel*) payload_);
+                    handler_(header_[0], payload_expected, payload_);
                 }
                 header_length_ = 0;
                 payload_length_ = 0;

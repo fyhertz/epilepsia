@@ -36,7 +36,7 @@ static const int MAX_PIXELS_PER_MESSAGE = ((1 << 16) / 3);
 
 struct Pixel { uint8_t r, g, b; };
 
-using Handler = std::function<void(uint8_t, uint16_t, Pixel*)>;
+using Handler = std::function<void(uint8_t, uint16_t, uint8_t*)>;
 
 class Source
 {

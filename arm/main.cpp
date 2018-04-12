@@ -40,10 +40,9 @@ int main(int argc, char *argv[]) {
         done = 1;
     });
 
-    source.setHandler([&](uint8_t channel, uint16_t count, opc::Pixel* pixels){
-        auto* p = reinterpret_cast<uint8_t*>(pixels);
+    source.setHandler([&](uint8_t channel, uint16_t length, uint8_t* pixels){
         auto* fb = display.getFrameBuffer();
-        memcpy(fb, p, (count>60*32) ? 60*32*3 : count*3);
+        memcpy(fb, pixels, (length>60*32*3) ? 60*32*3 : length);
         display.commitFrameBuffer();
     });
 
