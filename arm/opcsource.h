@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <thread>
 #include <functional>
+#include <atomic>
 
 namespace opc {
 
@@ -41,8 +42,11 @@ class Source
 {
 
 public:
-
     Source(const int port = DEFAULT_PORT);
+
+    Source(Source const&) = delete;
+    Source& operator =(Source const&) = delete;
+
     void setHandler(Handler&& handler);
     bool start();
     void stop();
@@ -51,9 +55,11 @@ public:
     void reset();
     void close();
 
-private:
+protected:
+    std::atomic<bool> running_{false};
+    void run();
 
-    bool running_ = false;
+private:
     int listen_sock_;
     int sock_;
     uint16_t port_;
@@ -61,7 +67,7 @@ private:
     uint8_t header_[4];
     uint16_t payload_length_;
     uint8_t payload_[1 << 16];
-    std::thread *thread_;
+    std::thread thread_;
     Handler handler_;
 
 };

@@ -40,21 +40,22 @@ void Source::setHandler(Handler&& handler) {
 bool Source::start() {
     if (!running_ && listen()) {
         running_ = true;
-        thread_ = new std::thread([this](){
-            while (running_) {
-                receive(5000);
-            }
-        });
+        thread_ = std::thread(&Source::run, this);
         return true;
     }
     return false;
 }
 
+void Source::run() {
+    while (running_) {
+        receive(5000);
+    }
+}
+
 void Source::stop() {
     if (running_) {
         running_ = false;
-        thread_->join();
-        delete thread_;
+        thread_.join();
     }
 }
 

@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     display.setBrightness(0.1f, true);
 
     signal(SIGINT, [](int signum){
-        printf("done!\n");
+        cout<<"Done!"<<endl;
         done = 1;
     });
 
