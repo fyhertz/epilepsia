@@ -16,7 +16,7 @@ import numpy as np
 @click.option('-p', '--port', default=7890, help='OPC server port')
 def main(framerate, ip, port):
 
-    client = opc.Client(server)
+    client = opc.Client(ip + ':' + str(port))
 
     x_dim = 60
     y_dim = 32
