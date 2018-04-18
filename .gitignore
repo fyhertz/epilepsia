@@ -6,6 +6,9 @@
 *.includes
 *.config
 
+# vscode
+.vscode
+
 # Compiled Object files
 *.o
 *.d

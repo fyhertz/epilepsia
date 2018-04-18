@@ -15,44 +15,43 @@
  */
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include <stdint.h>
-#include <signal.h>
+#include "leddisplay.h"
+#include "server.h"
 #include <iostream>
+#include <signal.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "opcsource.h"
-#include "leddisplay.h"
-
-using namespace std;
 
 volatile sig_atomic_t done = 0;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[])
+{
 
-    opc::Source source;
+    epilepsia::Server server{ 7890 };
     LedDisplay& display = LedDisplay::getInstance();
 
     display.setBrightness(0.1f, true);
 
-    signal(SIGINT, [](int signum){
-        cout<<"Done!"<<endl;
+    signal(SIGINT, [](int signum) {
+        std::cout << "Done!" << std::endl;
         done = 1;
     });
 
-    source.setHandler([&](uint8_t channel, uint16_t length, uint8_t* pixels){
+    server.set_handler<epilepsia::OpcCommand::set_pixels>([&](uint8_t channel, uint16_t length, uint8_t* pixels) {
         auto* fb = display.getFrameBuffer();
-        memcpy(fb, pixels, (length>60*32*3) ? 60*32*3 : length);
+        memcpy(fb, pixels, (length > 60 * 32 * 3) ? 60 * 32 * 3 : length);
         display.commitFrameBuffer();
     });
 
-    source.start();
+    server.start();
 
     while (!done) {
         sleep(1);
     }
 
-    source.stop();
+    server.stop();
     display.clear();
 
     return 0;
