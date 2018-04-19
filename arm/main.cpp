@@ -30,9 +30,10 @@ int main(int argc, char* argv[])
 {
 
     epilepsia::Server server{ 7890 };
-    LedDisplay& display = LedDisplay::getInstance();
+    auto& display = epilepsia::LedDisplay::get_instance();
 
-    display.setBrightness(0.1f, true);
+    display.set_brightness(0.1f);
+    display.set_dithering(true);
 
     signal(SIGINT, [](int signum) {
         std::cout << "Done!" << std::endl;
@@ -40,9 +41,9 @@ int main(int argc, char* argv[])
     });
 
     server.set_handler<epilepsia::OpcCommand::set_pixels>([&](uint8_t channel, uint16_t length, uint8_t* pixels) {
-        auto* fb = display.getFrameBuffer();
+        auto* fb = display.get_frame_buffer();
         memcpy(fb, pixels, (length > 60 * 32 * 3) ? 60 * 32 * 3 : length);
-        display.commitFrameBuffer();
+        display.commit_frame_buffer();
     });
 
     server.start();
