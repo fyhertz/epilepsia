@@ -52,6 +52,7 @@ public:
 
 private:
     struct Client {
+        std::string sin_addr;
         size_t received{ 0 };
         uint16_t total_length{ 0 };
         uint8_t buffer[(1 << 16) + 4];

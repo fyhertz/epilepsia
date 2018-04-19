@@ -35,12 +35,13 @@ Recommended use:
 
 import socket
 import struct
-import sys
-
-SET_PIXEL_COLOURS = 0  # "Set pixel colours" command (see openpixelcontrol.org)
 
 
-class Client(object):
+class OpcClient(object):
+
+    SET_PIXEL_COLOURS = 0  # "Set pixel colours" command (see openpixelcontrol.org)
+    SYSTEM_EXCLUSIVE = 0xFF  # "System exclusive" command (see openpixelcontrol.org)
+
     def __init__(self, server_ip_port, long_connection=True, verbose=False):
         """Create an OPC client object which sends pixels to an OPC server.
 
@@ -119,6 +120,33 @@ class Client(object):
             self.disconnect()
         return success
 
+    def send_command(self, command, data, length, channel=0):
+        self._debug('send_command: connecting')
+        is_connected = self._ensure_connected()
+        if not is_connected:
+            self._debug('send_command: not connected.  ignoring this command.')
+            return False
+
+        # build OPC message
+        header = struct.pack('>BBH', channel, command, length)
+        if bytes is str:
+            message = header + ''.join(data)
+        else:
+            message = header + b''.join(data)
+        self._debug('send_command: sending command to server')
+        try:
+            self._socket.send(message)
+        except socket.error:
+            self._debug('send_command: connection lost.  could not send pixels.')
+            self._socket = None
+            return False
+
+        if not self._long_connection:
+            self._debug('send_command: disconnecting')
+            self.disconnect()
+
+        return True
+
     def put_pixels(self, pixels, channel=0):
         """Send the list of pixel colors to the OPC server on the given channel.
 
@@ -142,36 +170,33 @@ class Client(object):
         LED at a time (unless it's the first one).
 
         """
-        self._debug('put_pixels: connecting')
-        is_connected = self._ensure_connected()
-        if not is_connected:
-            self._debug('put_pixels: not connected.  ignoring these pixels.')
-            return False
-
-        # build OPC message
-        command = SET_PIXEL_COLOURS
-        header = struct.pack('>BBH', channel, SET_PIXEL_COLOURS, len(pixels)*3)
         pieces = [struct.pack(
                       'BBB',
                       min(255, max(0, int(r))),
                       min(255, max(0, int(g))),
                       min(255, max(0, int(b)))
                   ) for r, g, b in pixels]
-        if bytes is str:
-            message = header + ''.join(pieces)
-        else:
-            message = header + b''.join(pieces)
 
-        self._debug('put_pixels: sending pixels to server')
-        try:
-            self._socket.send(message)
-        except socket.error:
-            self._debug('put_pixels: connection lost.  could not send pixels.')
-            self._socket = None
-            return False
+        return self.send_command(OpcClient.SET_PIXEL_COLOURS, pieces, len(pieces)*3, channel)
 
-        if not self._long_connection:
-            self._debug('put_pixels: disconnecting')
-            self.disconnect()
 
-        return True
+class Client(OpcClient):
+
+    SET_BRIGHTNESS = 0x00
+    SET_DITHERING = 0x01
+
+    def set_brightness(self, brightness):
+        command = struct.pack(
+            'BB',
+            Client.SET_BRIGHTNESS,
+            min(255, max(0, int(brightness*255)))
+        )
+        self.send_command(Client.SYSTEM_EXCLUSIVE, command, 2)
+
+    def set_dithering(self, dithering):
+        command = struct.pack(
+            'BB',
+            Client.SET_DITHERING,
+            min(1, max(0, int(dithering)))
+        )
+        self.send_command(Client.SYSTEM_EXCLUSIVE, command, 2)

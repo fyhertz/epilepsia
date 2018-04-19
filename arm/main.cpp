@@ -46,6 +46,16 @@ int main(int argc, char* argv[])
         display.commit_frame_buffer();
     });
 
+    server.set_handler<epilepsia::OpcCommand::system_exclusive>([&](uint8_t channel, uint16_t length, uint8_t* data) {
+        if (length == 2 && data[0] == 0x00) {
+            float brightness = data[1] / 255.0f;
+            display.set_brightness(brightness);
+        } else if (length == 2 && data[0] == 0x01) {
+            bool dithering = data[1];
+            display.set_dithering(dithering);
+        }
+    });
+
     server.start();
 
     while (!done) {

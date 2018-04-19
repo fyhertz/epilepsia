@@ -110,7 +110,8 @@ void Server::run()
                 int sock = accept(i, (struct sockaddr*)&clientname, &address_len);
                 if (sock >= 0) {
                     inet_ntop(AF_INET, &(clientname.sin_addr), buffer, 64);
-                    fprintf(stderr, "Server: Client connected from %s\n", buffer);
+                    clients_[sock].sin_addr = std::string(buffer);
+                    fprintf(stderr, "Client connected from %s\n", buffer);
                     FD_SET(sock, &active_fd_set);
                 }
                 FD_CLR(i, &read_fd_set);
@@ -124,6 +125,7 @@ void Server::run()
                 if (!read_from_client(i)) {
                     close(i);
                     FD_CLR(i, &active_fd_set);
+                    fprintf(stderr, "Client disconnected from %s\n", clients_[i].sin_addr.c_str());
                 }
             }
         }
