@@ -29,7 +29,7 @@ volatile sig_atomic_t done = 0;
 int main(int argc, char* argv[])
 {
 
-    epilepsia::Server server{ 7890 };
+    epilepsia::Server server{ 7890, 8080 };
     auto& display = epilepsia::LedDisplay::get_instance();
 
     display.set_brightness(0.1f);

@@ -41,8 +41,8 @@ public:
     Server(Server const&) = delete;
     Server& operator=(Server const&) = delete;
 
-    bool start() noexcept;
-    void stop() noexcept;
+    bool start();
+    void stop();
 
     template <OpcCommand command, typename T>
     void set_handler(T&& handler) noexcept
@@ -51,11 +51,36 @@ public:
     }
 
 private:
-    struct Client {
-        std::string sin_addr;
+    void run();
+    bool listen();
+    void call_handler(uint16_t payload_len, uint8_t *opc_packet);
+
+    class Client {
+    public:
+        Client(int& fd_, Server& server)
+            : fd(fd_), server_(server) {}
+
+        bool read();
+
+    private:
+        bool handle_opc();
+        bool handle_websocket_handshake();
+        bool handle_websocket_data();
+
+        enum class ClientState {
+            new_connection,
+            websocket_handshake,
+            websocket,
+            opc
+        };
+        ClientState state{ ClientState::new_connection };
+
+        int fd;
+        std::array<uint8_t, (1 << 16) + 4> buffer;
+        std::array<uint8_t, 4> masking_key_;
         size_t received{ 0 };
-        uint16_t total_length{ 0 };
-        uint8_t buffer[(1 << 16) + 4];
+        uint16_t payload_length{ 0 };
+        Server& server_;
     };
 
     std::thread thread_;
@@ -64,10 +89,6 @@ private:
     std::vector<int> listen_socks_;
     std::atomic<bool> running_{ false };
     std::array<Handler, 2> handlers_;
-
-    void run();
-    bool listen();
-    bool read_from_client(int client);
 };
 
 } // namespace epilepsia
