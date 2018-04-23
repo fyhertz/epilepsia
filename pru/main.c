@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <pru_cfg.h>
 #include <string.h>
-#include "resource_table_pru1.h"
+#include "resource_table_pru.h"
 
 volatile register uint32_t __R30;
 volatile register uint32_t __R31;

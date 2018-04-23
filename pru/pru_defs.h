@@ -14,15 +14,6 @@
 #define R31_VECTOR_VALID_STROBE_BIT	5
 #define R31_PRU1_TO_PRU0		(SE_PRU1_TO_PRU0 - 16)
 
-#define RPMSG_CHAN_NAME			"rpmsg-pru"
-
-#define PRU0_RPMSG_CHAN_DESC		"Channel 30"
-#define PRU0_RPMSG_CHAN_PORT		30
-#define PRU1_RPMSG_CHAN_DESC		"Channel 31"
-#define PRU1_RPMSG_CHAN_PORT		31
-
-#define VIRTIO_CONFIG_S_DRIVER_OK	4
-
 /* Macros */
 
 #define check_host_int(host)\
