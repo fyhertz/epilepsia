@@ -32,14 +32,14 @@ enum class OpcCommand {
     system_exclusive = 0xFF
 };
 
-class Server {
+class server {
 public:
     using Handler = std::function<void(uint8_t, uint16_t, uint8_t*)>;
 
-    Server(std::initializer_list<uint16_t> ports);
+    server(std::initializer_list<uint16_t> ports);
 
-    Server(Server const&) = delete;
-    Server& operator=(Server const&) = delete;
+    server(server const&) = delete;
+    server& operator=(server const&) = delete;
 
     bool start();
     void stop();
@@ -57,7 +57,7 @@ private:
 
     class Client {
     public:
-        Client(int& fd_, Server& server)
+        Client(int& fd_, server& server)
             : fd(fd_), server_(server) {}
 
         bool read();
@@ -80,7 +80,7 @@ private:
         std::array<uint8_t, 4> masking_key_;
         size_t received{ 0 };
         uint16_t payload_length{ 0 };
-        Server& server_;
+        server& server_;
     };
 
     std::thread thread_;

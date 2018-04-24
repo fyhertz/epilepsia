@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LEDDISPLAY_H
-#define LEDDISPLAY_H
+#ifndef EPILEPSIADRIVER_H
+#define EPILEPSIADRIVER_H
 
 #include <math.h>
 #include <stdint.h>
@@ -23,21 +23,18 @@
 
 namespace epilepsia {
 
-class LedDisplay {
+class led_driver {
 public:
     static const int bytes_per_strip = 120 * 3; // 3 bytes per led, 120 leds
     static const int frame_buffer_size = bytes_per_strip * 16; // 16 strips
 
-    static LedDisplay& get_instance()
-    {
-        static LedDisplay instance;
-        return instance;
-    }
+    led_driver(led_driver const&) = delete;
+    led_driver(led_driver&&) = delete;
+    led_driver& operator=(led_driver const&) = delete;
+    led_driver& operator=(led_driver&&) = delete;
 
-    LedDisplay(LedDisplay const&) = delete;
-    LedDisplay(LedDisplay&&) = delete;
-    LedDisplay& operator=(LedDisplay const&) = delete;
-    LedDisplay& operator=(LedDisplay&&) = delete;
+    led_driver();
+    ~led_driver();
 
     uint8_t* get_frame_buffer();
     void commit_frame_buffer();
@@ -45,10 +42,6 @@ public:
 
     void set_brightness(const float brightness);
     void set_dithering(const bool dithering);
-
-protected:
-    LedDisplay();
-    ~LedDisplay();
 
 private:
     void swap_pru_buffers();
@@ -67,4 +60,4 @@ private:
 };
 }
 
-#endif // LEDDISPLAY_H
+#endif // EPILEPSIADRIVER_H

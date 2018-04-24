@@ -15,7 +15,7 @@
  */
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "leddisplay.h"
+#include "leddriver.h"
 #include "server.h"
 #include <iostream>
 #include <signal.h>
@@ -29,8 +29,8 @@ volatile sig_atomic_t done = 0;
 int main(int argc, char* argv[])
 {
 
-    epilepsia::Server server{ 7890, 8080 };
-    auto& display = epilepsia::LedDisplay::get_instance();
+    epilepsia::server server{ 7890, 8080 };
+    epilepsia::led_driver display;
 
     display.set_brightness(0.1f);
     display.set_dithering(true);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "leddisplay.h"
+#include "leddriver.h"
 #include <fcntl.h>
 #include <iostream>
 #include <string.h>
@@ -23,7 +23,7 @@
 
 namespace epilepsia {
 
-LedDisplay::LedDisplay()
+led_driver::led_driver()
 {
     mem_fd_ = open("/dev/mem", O_RDWR | O_SYNC);
     if (mem_fd_ < 0) {
@@ -49,23 +49,23 @@ LedDisplay::LedDisplay()
     update_lut();
 }
 
-LedDisplay::~LedDisplay()
+led_driver::~led_driver()
 {
     close(mem_fd_);
 }
 
-uint8_t* LedDisplay::get_frame_buffer()
+uint8_t* led_driver::get_frame_buffer()
 {
     return frame_buffer_;
 }
 
-void LedDisplay::clear()
+void led_driver::clear()
 {
     memset(frame_buffer_, 0, frame_buffer_size);
     commit_frame_buffer();
 }
 
-void LedDisplay::commit_frame_buffer()
+void led_driver::commit_frame_buffer()
 {
     remap_bits();
     swap_pru_buffers();
@@ -73,7 +73,7 @@ void LedDisplay::commit_frame_buffer()
     swap_pru_buffers();
 }
 
-void LedDisplay::swap_pru_buffers()
+void led_driver::swap_pru_buffers()
 {
     current_buffer = !current_buffer;
     // Wait for both PRU to be ready for the next frame
@@ -84,7 +84,7 @@ void LedDisplay::swap_pru_buffers()
     *flag_pru_[1] = 0;
 }
 
-void LedDisplay::remap_bits()
+void led_driver::remap_bits()
 {
     uint8_t* frame = frame_[current_buffer];
     uint8_t tmp1[frame_buffer_size];
@@ -144,7 +144,7 @@ void LedDisplay::remap_bits()
     memcpy(frame, tmp2, frame_buffer_size);
 }
 
-void LedDisplay::set_brightness(const float brightness)
+void led_driver::set_brightness(const float brightness)
 {
     if (brightness_ != brightness) {
         brightness_ = brightness;
@@ -152,7 +152,7 @@ void LedDisplay::set_brightness(const float brightness)
     }
 }
 
-void LedDisplay::set_dithering(const bool dithering)
+void led_driver::set_dithering(const bool dithering)
 {
     if (dithering_ != dithering) {
         dithering_ = dithering;
@@ -160,7 +160,7 @@ void LedDisplay::set_dithering(const bool dithering)
     }
 }
 
-void LedDisplay::update_lut()
+void led_driver::update_lut()
 {
     static const std::array<uint8_t, 256> gamma8{
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
