@@ -29,8 +29,8 @@ volatile sig_atomic_t done = 0;
 int main(int argc, char* argv[])
 {
 
-    epilepsia::server server{ 7890, 8080 };
-    epilepsia::led_driver display;
+    epilepsia::server server{ 7890 };
+    epilepsia::led_driver display(120);
 
     display.set_brightness(0.1f);
     display.set_dithering(true);

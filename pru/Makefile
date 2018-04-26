@@ -69,13 +69,13 @@ $(PRU0_FW): $(GEN_DIR)/main_pru0.object $(LINK_PRU0_FW)
 $(GEN_DIR)/main_pru0.object: main.c 
 	@mkdir -p $(GEN_DIR)
 	@echo 'CC	$<'
-	@$(PRU_CGT)/bin/clpru --include_path=$(PRU_CGT)/include $(INCLUDE) $(CFLAGS) -D PRU_NUM=0 -fe $@ $<
+	@$(PRU_CGT)/bin/clpru --include_path=$(PRU_CGT)/include $(INCLUDE) $(CFLAGS) -D PRU_ID=0 -fe $@ $<
 
 
 $(GEN_DIR)/main_pru1.object: main.c
 	@mkdir -p $(GEN_DIR)
 	@echo 'CC	$<'
-	@$(PRU_CGT)/bin/clpru --include_path=$(PRU_CGT)/include $(INCLUDE) $(CFLAGS) -D PRU_NUM=1 -fe $@ $<
+	@$(PRU_CGT)/bin/clpru --include_path=$(PRU_CGT)/include $(INCLUDE) $(CFLAGS) -D PRU_ID=1 -fe $@ $<
 
 
 .PHONY: clean

@@ -27,7 +27,7 @@ def main(framerate, ip, port):
     while True:
 
         frame.fill(0)
-        frame[k] = [[0, 0, 100] for i in range(60)]
+        frame[k] = [[255, 0, 0] for i in range(60)]
 
         k = (k + 1) % 32
 

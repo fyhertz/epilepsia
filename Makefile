@@ -8,7 +8,8 @@ BIN_ARM = arm/epilepsia
 BIN_PRU_0 = pru/gen/am335x-pru0-fw
 BIN_PRU_1 = pru/gen/am335x-pru1-fw
 
-PINS = P8_46 P8_44 P8_42 P8_28 P9_25 P9_27 P9_29 P9_31
+PINS = P8_46 P8_44 P8_42 P8_28 # PRU 1
+PINS += P9_25 P9_27 P9_29 P9_31 P8_11 # PRU 0
 
 .PHONY:
 all: build

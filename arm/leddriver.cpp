@@ -23,28 +23,41 @@
 
 namespace epilepsia {
 
-led_driver::led_driver()
+led_driver::led_driver(const size_t strip_length)
+    : strip_length_(strip_length + strip_length % 4)
+    , // has to be a multiple of 4
+    bytes_per_strip_(strip_length_ * 3)
+    , frame_buffer_size_(bytes_per_strip_ * 16)
 {
+
+    // PRU shared mem = 12kB
+    if (frame_buffer_size_ > (12 * 1024 - 3) / 2) {
+        fprintf(stderr, "Not enough memory");
+        std::exit(EXIT_FAILURE);
+    }
+
     mem_fd_ = open("/dev/mem", O_RDWR | O_SYNC);
     if (mem_fd_ < 0) {
-        printf("Failed to open /dev/mem (%s)\n", strerror(errno));
+        fprintf(stderr, "Failed to open /dev/mem (%s)\n", strerror(errno));
         std::exit(EXIT_FAILURE);
     }
 
     // Address of the PRUs shared memory in a am335 soc
     shared_memory_ = static_cast<uint8_t*>(mmap(0, 0x00003000, PROT_WRITE | PROT_READ, MAP_SHARED, mem_fd_, 0x4A300000 + 0x00010000));
     if (shared_memory_ == NULL) {
-        printf("Failed to map the device (%s)\n", strerror(errno));
+        fprintf(stderr, "Failed to map the device (%s)\n", strerror(errno));
         close(mem_fd_);
         std::exit(EXIT_FAILURE);
     }
 
-    //memset(shared_memory_, 0, 12*1024); // reset shared memory
-
     flag_pru_[0] = &shared_memory_[0];
     flag_pru_[1] = &shared_memory_[1];
-    frame_[0] = &shared_memory_[2];
-    frame_[1] = &shared_memory_[2 + frame_buffer_size];
+    shared_memory_[2] = strip_length_ & 0xFF;
+    frame_[0] = &shared_memory_[4];
+    frame_[1] = &shared_memory_[4 + frame_buffer_size_];
+
+    printf("Strip length: %d\n", strip_length_);
+    printf("Frame buffer size: %d\n", frame_buffer_size_);
 
     update_lut();
 }
@@ -61,7 +74,7 @@ uint8_t* led_driver::get_frame_buffer()
 
 void led_driver::clear()
 {
-    memset(frame_buffer_, 0, frame_buffer_size);
+    memset(frame_buffer_, 0, frame_buffer_size_);
     commit_frame_buffer();
 }
 
@@ -87,14 +100,13 @@ void led_driver::swap_pru_buffers()
 void led_driver::remap_bits()
 {
     uint8_t* frame = frame_[current_buffer];
-    uint8_t tmp1[frame_buffer_size];
-    uint8_t tmp2[frame_buffer_size];
+    uint8_t tmp1[frame_buffer_size_];
     uint8_t p;
 
-    memcpy(tmp1, frame_buffer_, frame_buffer_size);
+    memcpy(tmp1, frame_buffer_, frame_buffer_size_);
 
     // RGB to GRB, gamma correction and brightness adjustment
-    for (auto i = 0; i < frame_buffer_size; i += 3) {
+    for (auto i = 0; i < frame_buffer_size_; i += 3) {
         p = tmp1[i];
         tmp1[i] = lut_[current_buffer][tmp1[i + 1]];
         tmp1[i + 1] = lut_[current_buffer][p];
@@ -102,33 +114,33 @@ void led_driver::remap_bits()
     }
 
     // Every two lines of the display is wired upside-down
-    for (auto i = bytes_per_strip / 2; i < frame_buffer_size; i += bytes_per_strip) {
-        for (auto j = 0; j < bytes_per_strip / 4; j += 3) {
+    for (auto i = bytes_per_strip_ / 2; i < frame_buffer_size_; i += bytes_per_strip_) {
+        for (auto j = 0; j < bytes_per_strip_ / 4; j += 3) {
             p = tmp1[i + j];
-            tmp1[i + j] = tmp1[i + bytes_per_strip / 2 - 1 - j - 2];
-            tmp1[i + bytes_per_strip / 2 - 1 - j - 2] = p;
+            tmp1[i + j] = tmp1[i + bytes_per_strip_ / 2 - 1 - j - 2];
+            tmp1[i + bytes_per_strip_ / 2 - 1 - j - 2] = p;
 
             p = tmp1[i + j + 1];
-            tmp1[i + j + 1] = tmp1[i + bytes_per_strip / 2 - 1 - j - 1];
-            tmp1[i + bytes_per_strip / 2 - 1 - j - 1] = p;
+            tmp1[i + j + 1] = tmp1[i + bytes_per_strip_ / 2 - 1 - j - 1];
+            tmp1[i + bytes_per_strip_ / 2 - 1 - j - 1] = p;
 
             p = tmp1[i + j + 2];
-            tmp1[i + j + 2] = tmp1[i + bytes_per_strip / 2 - 1 - j];
-            tmp1[i + bytes_per_strip / 2 - 1 - j] = p;
+            tmp1[i + j + 2] = tmp1[i + bytes_per_strip_ / 2 - 1 - j];
+            tmp1[i + bytes_per_strip_ / 2 - 1 - j] = p;
         }
     }
 
     // We reorder the bits of the buffer for the
     // serial to parallel shift registers
-    {
+    /*{
         uint32_t m = 0, n = 0;
         uint32_t* tmp1r = reinterpret_cast<uint32_t*>(tmp1);
-
-        for (auto l = 0, ll = 0; l < frame_buffer_size / 4; l += frame_buffer_size / 8, ll += frame_buffer_size / 2) {
-            for (auto i = 0, ii = 0; i < bytes_per_strip / 4; i++, ii += 32) {
+    
+        for (auto l = 0, ll = 0; l < frame_buffer_size_ / 4; l += frame_buffer_size_ / 8, ll += frame_buffer_size_ / 2) {
+            for (auto i = 0, ii = 0; i < bytes_per_strip_ / 4; i++, ii += 32) {
                 for (auto j = 0; j < 8; j++) {
                     m = 0;
-                    for (auto k = 0, kk = 0; k < 8; k++, kk += bytes_per_strip / 4) {
+                    for (auto k = 0, kk = 0; k < 8; k++, kk += bytes_per_strip_ / 4) {
                         n = tmp1r[l + i + kk];
                         m |= (((n >> (7 - j)) & 0x01010101) << (7 - k));
                     }
@@ -139,9 +151,36 @@ void led_driver::remap_bits()
                 }
             }
         }
+    }*/
+
+    {
+        uint32_t m = 0, n = 0;
+        uint16_t tmp2[frame_buffer_size_/2];
+        uint32_t* tmp1r = reinterpret_cast<uint32_t*>(tmp1);
+
+        for (auto i = 0, ii = 0; i < bytes_per_strip_ / 4; i++, ii += 32) {
+            for (auto j = 0; j < 8; j++) {
+                m = 0;
+                for (auto k = 0, kk = 0; k < 16; k++, kk += bytes_per_strip_ / 4) {
+                    n = tmp1r[i + kk];
+                    m |= (((n >> (7 - j)) & 0x00010001) << (15 - k));
+                }
+                tmp2[ii + j + 00] = (m >> 0) & 0xFFFF;
+                tmp2[ii + j + 16] = (m >> 16) & 0xFFFF;
+            }
+            for (auto j = 8; j < 16; j++) {
+                m = 0;
+                for (auto k = 0, kk = 0; k < 16; k++, kk += bytes_per_strip_ / 4) {
+                    n = tmp1r[i + kk];
+                    m |= (((n >> (15+8 - j)) & 0x00010001) << (15 - k));
+                }
+                tmp2[ii + j + 00] = (m >> 0) & 0xFFFF;
+                tmp2[ii + j + 16] = (m >> 16) & 0xFFFF;
+            }
+        }
+        memcpy(frame, tmp2, frame_buffer_size_);
     }
 
-    memcpy(frame, tmp2, frame_buffer_size);
 }
 
 void led_driver::set_brightness(const float brightness)

@@ -25,15 +25,13 @@ namespace epilepsia {
 
 class led_driver {
 public:
-    static const int bytes_per_strip = 120 * 3; // 3 bytes per led, 120 leds
-    static const int frame_buffer_size = bytes_per_strip * 16; // 16 strips
 
     led_driver(led_driver const&) = delete;
     led_driver(led_driver&&) = delete;
     led_driver& operator=(led_driver const&) = delete;
     led_driver& operator=(led_driver&&) = delete;
 
-    led_driver();
+    led_driver(const size_t strip_length);
     ~led_driver();
 
     uint8_t* get_frame_buffer();
@@ -48,12 +46,16 @@ private:
     void remap_bits();
     void update_lut();
 
+    const int strip_length_;
+    const int bytes_per_strip_;
+    const int frame_buffer_size_;
+
     int mem_fd_;
     int current_buffer = 0;
     uint8_t* shared_memory_;
     uint8_t* flag_pru_[2];
     uint8_t* frame_[2];
-    uint8_t frame_buffer_[frame_buffer_size];
+    uint8_t frame_buffer_[12*1024];
     uint8_t lut_[2][256];
     float brightness_{ 0.1f };
     bool dithering_{ true };
