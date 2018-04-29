@@ -31,7 +31,7 @@ led_driver::led_driver(const size_t strip_length)
 {
 
     // PRU shared mem = 12kB
-    if (frame_buffer_size_ > (12 * 1024 - 3) / 2) {
+    if (frame_buffer_size_ > 12 * 1024 - 4) {
         fprintf(stderr, "Not enough memory");
         std::exit(EXIT_FAILURE);
     }
@@ -53,8 +53,7 @@ led_driver::led_driver(const size_t strip_length)
     flag_pru_[0] = &shared_memory_[0];
     flag_pru_[1] = &shared_memory_[1];
     shared_memory_[2] = strip_length_ & 0xFF;
-    frame_[0] = &shared_memory_[4];
-    frame_[1] = &shared_memory_[4 + frame_buffer_size_];
+    frame_ = &shared_memory_[4];
 
     printf("Strip length: %d\n", strip_length_);
     printf("Frame buffer size: %d\n", frame_buffer_size_);
@@ -80,15 +79,14 @@ void led_driver::clear()
 
 void led_driver::commit_frame_buffer()
 {
+    wait_for_pru();
     remap_bits();
-    swap_pru_buffers();
+    wait_for_pru();
     remap_bits();
-    swap_pru_buffers();
 }
 
-void led_driver::swap_pru_buffers()
+void led_driver::wait_for_pru()
 {
-    current_buffer = !current_buffer;
     // Wait for both PRU to be ready for the next frame
     while (*flag_pru_[0] == 0 || *flag_pru_[1] == 0) {
         usleep(10);
@@ -99,7 +97,6 @@ void led_driver::swap_pru_buffers()
 
 void led_driver::remap_bits()
 {
-    uint8_t* frame = frame_[current_buffer];
     uint8_t tmp1[frame_buffer_size_];
     uint8_t p;
 
@@ -108,9 +105,9 @@ void led_driver::remap_bits()
     // RGB to GRB, gamma correction and brightness adjustment
     for (auto i = 0; i < frame_buffer_size_; i += 3) {
         p = tmp1[i];
-        tmp1[i] = lut_[current_buffer][tmp1[i + 1]];
-        tmp1[i + 1] = lut_[current_buffer][p];
-        tmp1[i + 2] = lut_[current_buffer][tmp1[i + 2]];
+        tmp1[i] = lut_[0][tmp1[i + 1]];
+        tmp1[i + 1] = lut_[0][p];
+        tmp1[i + 2] = lut_[0][tmp1[i + 2]];
     }
 
     // Every two lines of the display is wired upside-down
@@ -178,7 +175,7 @@ void led_driver::remap_bits()
                 tmp2[ii + j + 16] = (m >> 16) & 0xFFFF;
             }
         }
-        memcpy(frame, tmp2, frame_buffer_size_);
+        memcpy(frame_, tmp2, frame_buffer_size_);
     }
 
 }

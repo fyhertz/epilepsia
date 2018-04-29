@@ -42,7 +42,7 @@ public:
     void set_dithering(const bool dithering);
 
 private:
-    void swap_pru_buffers();
+    void wait_for_pru();
     void remap_bits();
     void update_lut();
 
@@ -51,10 +51,9 @@ private:
     const int frame_buffer_size_;
 
     int mem_fd_;
-    int current_buffer = 0;
     uint8_t* shared_memory_;
     uint8_t* flag_pru_[2];
-    uint8_t* frame_[2];
+    uint8_t* frame_;
     uint8_t frame_buffer_[12*1024];
     uint8_t lut_[2][256];
     float brightness_{ 0.1f };

@@ -69,34 +69,31 @@ void main(void)
     while (*flag_pru == 1) {}
 
     const uint32_t frame_buffer_size = shared_memory[2] * 3 * 16; // 16 strips
-    const uint8_t* frame[2] = {
-        ((uint8_t*)shared_memory) + 4,
-        ((uint8_t*)shared_memory) + 4 + frame_buffer_size
-    };
+    const uint8_t* frame = shared_memory + 4;
     const uint32_t start = PRU_ID ? 0 : 1;
 
-    uint32_t j = 0, k = 0;
+    uint32_t j = 0;
 
     while (1) {
-        k = !k;
 
         for (j = start; j < frame_buffer_size; j += 2) {
             write_byte_to_spi(0xFF); //230ns
             __delay_cycles(4); // 20ns
 
-            write_byte_to_spi(frame[k][j]); //230ns
+            write_byte_to_spi(frame[j]); //230ns
             __delay_cycles(24); // 120ns
 
             write_byte_to_spi(0x00); //230ns
             __delay_cycles(4); // 20ns
         }
 
+        // Wait for the ARM to be ready for the next frame
+        *flag_pru = 1;
+        while (*flag_pru == 1) {}
+
         // The 50 us reset code needed by led strips.
         __R30 = 0;
         __delay_cycles(12000);
 
-        // Wait for the ARM to be ready for the next frame
-        *flag_pru = 1;
-        while (*flag_pru == 1) {}
     }
 }
