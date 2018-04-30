@@ -18,12 +18,11 @@ def main(framerate, ip, port):
 
     x_dim = 60
     y_dim = 32
-    speed = 2.0
+    speed = 1.0
 
     client = opc.Client(ip + ':' + str(port))
     frame = np.zeros((y_dim, x_dim, 3), dtype=np.uint8)
 
-    dt = 1.0 / framerate
     t = 0
     freq_x = 16.0
     freq_y = 16.0
@@ -38,6 +37,7 @@ def main(framerate, ip, port):
         return x*512
 
     while True:
+        start_time = time.time()
 
         frame.fill(0)
 
@@ -48,10 +48,11 @@ def main(framerate, ip, port):
                 bv = int(f(pnoise3(i / freq_y + 20000, j / freq_x + 20000, t, octaves=octaves)))
                 frame[i][j] = (rv, gv, bv)
 
-        t = t + speed*dt
+        t = t + speed/framerate
 
         client.put_pixels(frame.reshape((x_dim * y_dim, -1)), channel=0)
-        time.sleep(dt)
+
+        time.sleep(max(1.0/framerate - (time.time() - start_time), 0))
 
 
 if __name__ == '__main__':

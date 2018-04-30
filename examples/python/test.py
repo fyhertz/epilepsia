@@ -17,14 +17,13 @@ import numpy as np
 def main(framerate, ip, port):
 
     client = opc.Client(ip + ':' + str(port))
-
     x_dim = 60
     y_dim = 32
+    k = 0
     frame = np.zeros((y_dim, x_dim, 3), dtype=np.uint8)
 
-    k = 0
-
     while True:
+        start_time = time.time()
 
         frame.fill(0)
         frame[k] = [[255, 0, 0] for i in range(60)]
@@ -32,7 +31,8 @@ def main(framerate, ip, port):
         k = (k + 1) % 32
 
         client.put_pixels(frame.reshape((x_dim*y_dim, -1)), channel=0)
-        time.sleep(1 / framerate)
+
+        time.sleep(max(1.0/framerate - (time.time() - start_time), 0))
 
 
 if __name__ == '__main__':

@@ -17,18 +17,28 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "leddriver.h"
 #include "server.h"
+#include <chrono>
 #include <iostream>
 #include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <chrono>
 
 volatile sig_atomic_t done = 0;
 
-void estimate_frame_rate() {
+void estimate_frame_rate()
+{
+    static auto start = std::chrono::steady_clock::now();
+    static uint32_t counter{ 0 };
+    auto elapsed = std::chrono::steady_clock::now() - start;
 
+    if (std::chrono::duration<double, std::milli>(elapsed).count() > 1000) {
+        std::cout << "Frame rate: "<< counter << std::endl;
+        start = std::chrono::steady_clock::now();
+        counter = 0;
+    }
+    counter++;
 }
 
 int main(int argc, char* argv[])
@@ -49,6 +59,7 @@ int main(int argc, char* argv[])
         auto* fb = display.get_frame_buffer();
         memcpy(fb, pixels, (length > 60 * 32 * 3) ? 60 * 32 * 3 : length);
         display.commit_frame_buffer();
+        estimate_frame_rate();
     });
 
     server.set_handler<epilepsia::opc_command::system_exclusive>([&](uint8_t channel, uint16_t length, uint8_t* data) {

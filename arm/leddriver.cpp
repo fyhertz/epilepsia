@@ -80,7 +80,7 @@ void led_driver::clear()
 void led_driver::commit_frame_buffer()
 {
     remap_bits();
-    remap_bits();
+    //remap_bits();
 }
 
 void led_driver::wait_for_pru()
