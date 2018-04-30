@@ -21,13 +21,13 @@
 #include <functional>
 #include <initializer_list>
 #include <map>
-#include <stdint.h>
+#include <cstdint>
 #include <thread>
 #include <vector>
 
 namespace epilepsia {
 
-enum class OpcCommand {
+enum class opc_command {
     set_pixels = 0,
     system_exclusive = 0xFF
 };
@@ -44,10 +44,10 @@ public:
     bool start();
     void stop();
 
-    template <OpcCommand command, typename T>
+    template <opc_command command, typename T>
     void set_handler(T&& handler) noexcept
     {
-        handlers_[command == OpcCommand::set_pixels ? 0 : 1] = handler;
+        handlers_[command == opc_command::set_pixels ? 0 : 1] = handler;
     }
 
 private:
@@ -67,13 +67,13 @@ private:
         bool handle_websocket_handshake();
         bool handle_websocket_data();
 
-        enum class ClientState {
+        enum class client_state {
             new_connection,
             websocket_handshake,
             websocket,
             opc
         };
-        ClientState state{ ClientState::new_connection };
+        client_state state{ client_state::new_connection };
 
         int fd;
         std::array<uint8_t, (1 << 16) + 4> buffer;

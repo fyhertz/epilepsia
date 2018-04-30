@@ -23,8 +23,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <chrono>
 
 volatile sig_atomic_t done = 0;
+
+void estimate_frame_rate() {
+
+}
 
 int main(int argc, char* argv[])
 {
@@ -40,13 +45,13 @@ int main(int argc, char* argv[])
         done = 1;
     });
 
-    server.set_handler<epilepsia::OpcCommand::set_pixels>([&](uint8_t channel, uint16_t length, uint8_t* pixels) {
+    server.set_handler<epilepsia::opc_command::set_pixels>([&](uint8_t channel, uint16_t length, uint8_t* pixels) {
         auto* fb = display.get_frame_buffer();
         memcpy(fb, pixels, (length > 60 * 32 * 3) ? 60 * 32 * 3 : length);
         display.commit_frame_buffer();
     });
 
-    server.set_handler<epilepsia::OpcCommand::system_exclusive>([&](uint8_t channel, uint16_t length, uint8_t* data) {
+    server.set_handler<epilepsia::opc_command::system_exclusive>([&](uint8_t channel, uint16_t length, uint8_t* data) {
         if (length == 2 && data[0] == 0x00) {
             float brightness = data[1] / 255.0f;
             display.set_brightness(brightness);

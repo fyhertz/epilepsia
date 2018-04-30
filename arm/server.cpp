@@ -138,18 +138,18 @@ void server::run()
 
 void server::call_handler(uint16_t payload_len, uint8_t* opc_packet)
 {
-    if (opc_packet[1] == static_cast<int>(OpcCommand::set_pixels)) {
+    if (opc_packet[1] == static_cast<int>(opc_command::set_pixels)) {
         handlers_[0](opc_packet[0], payload_len, opc_packet + 4);
-    } else if (opc_packet[1] == static_cast<int>(OpcCommand::system_exclusive)) {
+    } else if (opc_packet[1] == static_cast<int>(opc_command::system_exclusive)) {
         handlers_[1](opc_packet[0], payload_len, opc_packet + 4);
     }
 }
 
 bool server::Client::read()
 {
-    if (state == ClientState::opc) {
+    if (state == client_state::opc) {
         return handle_opc();
-    } else if (state == ClientState::websocket) {
+    } else if (state == client_state::websocket) {
         return handle_websocket_data();
     }
 
@@ -168,11 +168,11 @@ bool server::Client::read()
         const std::array<uint8_t, 4> a = { 'G', 'E', 'T', ' ' };
         if (std::equal(std::begin(a), std::end(a), std::begin(buffer))) {
             fprintf(stderr, "Websocket connection\n");
-            state = ClientState::websocket_handshake;
+            state = client_state::websocket_handshake;
             return handle_websocket_handshake();
         } else {
             fprintf(stderr, "OPC connection\n");
-            state = ClientState::opc;
+            state = client_state::opc;
             return handle_opc();
         }
     }
@@ -276,7 +276,7 @@ bool server::Client::handle_websocket_handshake()
 
             // Send HTTP response to client and switch to websocket
             ::send(fd, reply.c_str(), reply.length(), 0);
-            state = ClientState::websocket;
+            state = client_state::websocket;
             received = 0;
         }
 

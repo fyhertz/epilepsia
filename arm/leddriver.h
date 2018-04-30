@@ -18,14 +18,14 @@
 #define EPILEPSIADRIVER_H
 
 #include <math.h>
-#include <stdint.h>
+#include <cstdint>
 #include <thread>
+#include <atomic>
 
 namespace epilepsia {
 
 class led_driver {
 public:
-
     led_driver(led_driver const&) = delete;
     led_driver(led_driver&&) = delete;
     led_driver& operator=(led_driver const&) = delete;
@@ -45,6 +45,7 @@ private:
     void wait_for_pru();
     void remap_bits();
     void update_lut();
+    int get_frame_rate();
 
     const int strip_length_;
     const int bytes_per_strip_;
@@ -54,7 +55,7 @@ private:
     uint8_t* shared_memory_;
     uint8_t* flag_pru_[2];
     uint8_t* frame_;
-    uint8_t frame_buffer_[12*1024];
+    uint8_t frame_buffer_[12 * 1024];
     uint8_t lut_[2][256];
     float brightness_{ 0.1f };
     bool dithering_{ true };
