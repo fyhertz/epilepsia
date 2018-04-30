@@ -79,9 +79,7 @@ void led_driver::clear()
 
 void led_driver::commit_frame_buffer()
 {
-    wait_for_pru();
     remap_bits();
-    wait_for_pru();
     remap_bits();
 }
 
@@ -129,55 +127,32 @@ void led_driver::remap_bits()
 
     // We reorder the bits of the buffer for the
     // serial to parallel shift registers
-    /*{
-        uint32_t m = 0, n = 0;
-        uint32_t* tmp1r = reinterpret_cast<uint32_t*>(tmp1);
-    
-        for (auto l = 0, ll = 0; l < frame_buffer_size_ / 4; l += frame_buffer_size_ / 8, ll += frame_buffer_size_ / 2) {
-            for (auto i = 0, ii = 0; i < bytes_per_strip_ / 4; i++, ii += 32) {
-                for (auto j = 0; j < 8; j++) {
-                    m = 0;
-                    for (auto k = 0, kk = 0; k < 8; k++, kk += bytes_per_strip_ / 4) {
-                        n = tmp1r[l + i + kk];
-                        m |= (((n >> (7 - j)) & 0x01010101) << (7 - k));
-                    }
-                    tmp2[ll + ii + j] = (m >> 0) & 0xFF;
-                    tmp2[ll + ii + 8 + j] = (m >> 8) & 0xFF;
-                    tmp2[ll + ii + 16 + j] = (m >> 16) & 0xFF;
-                    tmp2[ll + ii + 24 + j] = (m >> 24) & 0xFF;
-                }
-            }
-        }
-    }*/
-
     {
-        uint32_t m = 0, n = 0;
-        uint16_t tmp2[frame_buffer_size_/2];
+        uint16_t tmp2[frame_buffer_size_ / 2];
         uint32_t* tmp1r = reinterpret_cast<uint32_t*>(tmp1);
 
         for (auto i = 0, ii = 0; i < bytes_per_strip_ / 4; i++, ii += 32) {
-            for (auto j = 0; j < 8; j++) {
-                m = 0;
-                for (auto k = 0, kk = 0; k < 16; k++, kk += bytes_per_strip_ / 4) {
-                    n = tmp1r[i + kk];
-                    m |= (((n >> (7 - j)) & 0x00010001) << (15 - k));
+            auto f = [&i, &ii, &tmp1r, &tmp2, this](auto offset) {
+                for (auto j = 0; j < 8; j++) {
+                    uint32_t m = 0;
+                    for (auto k = 0, kk = 0; k < 16; k++, kk += bytes_per_strip_ / 4) {
+                        uint32_t n = tmp1r[i + kk];
+                        // We assume the system is little-endian.
+                        // Otherwise, the first shift should be: n >> (15 - offset - j)
+                        m |= (((n >> (7 + offset - j)) & 0x00010001) << (15 - k));
+                    }
+                    // Assuming little-endian here as well
+                    tmp2[ii + j + offset + 00] = (m >> 0) & 0xFFFF;
+                    tmp2[ii + j + offset + 16] = (m >> 16) & 0xFFFF;
                 }
-                tmp2[ii + j + 00] = (m >> 0) & 0xFFFF;
-                tmp2[ii + j + 16] = (m >> 16) & 0xFFFF;
-            }
-            for (auto j = 8; j < 16; j++) {
-                m = 0;
-                for (auto k = 0, kk = 0; k < 16; k++, kk += bytes_per_strip_ / 4) {
-                    n = tmp1r[i + kk];
-                    m |= (((n >> (15+8 - j)) & 0x00010001) << (15 - k));
-                }
-                tmp2[ii + j + 00] = (m >> 0) & 0xFFFF;
-                tmp2[ii + j + 16] = (m >> 16) & 0xFFFF;
-            }
+            };
+            f(0);
+            f(8);
         }
-        memcpy(frame_, tmp2, frame_buffer_size_);
-    }
 
+        wait_for_pru();
+        memcpy(frame_, tmp2, frame_buffer_size_); // 280us for 5760 bytes
+    }
 }
 
 void led_driver::set_brightness(const float brightness)

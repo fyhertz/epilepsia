@@ -13,7 +13,7 @@
 #define LATCH P8_46
 //#define ENABLE P8_28
 #elif PRU_ID == 0
-#define P8_11 15
+#define P8_11 15 // Wired to SDI of second shift register
 #define P9_25 7
 #define P9_27 5
 #define P9_29 1
@@ -45,7 +45,7 @@ inline void write_byte_to_spi(uint8_t byte)
 
 inline void write_short_to_spi(uint16_t s)
 {
-    uint8_t bits = 0, i = 0;
+    uint16_t bits = 0, i = 0;
     // Fill the 8 bit shift register
     for (i = 0; i < 8; i++) {
         __R30 &= ~(1 << CLK); // clear
@@ -66,34 +66,47 @@ void main(void)
 
     // Wait for a frame from the ARM
     *flag_pru = 1;
-    while (*flag_pru == 1) {}
+    while (*flag_pru == 1);
 
     const uint32_t frame_buffer_size = shared_memory[2] * 3 * 16; // 16 strips
     const uint8_t* frame = shared_memory + 4;
-    const uint32_t start = PRU_ID ? 0 : 1;
+    const uint16_t* frame_16 = (uint16_t*)frame;
+    const uint32_t pru_id = PRU_ID;
 
     uint32_t j = 0;
 
     while (1) {
 
-        for (j = start; j < frame_buffer_size; j += 2) {
-            write_byte_to_spi(0xFF); //230ns
-            __delay_cycles(4); // 20ns
+        if (pru_id == 1) {
+            for (j = pru_id ? 0 : 1; j < frame_buffer_size; j += 2) {
+                write_byte_to_spi(0xFF); //230ns
+                __delay_cycles(4); // 20ns
 
-            write_byte_to_spi(frame[j]); //230ns
-            __delay_cycles(24); // 120ns
+                write_byte_to_spi(frame[j]); //230ns
+                __delay_cycles(24); // 120ns
 
-            write_byte_to_spi(0x00); //230ns
-            __delay_cycles(4); // 20ns
+                write_byte_to_spi(0x00); //230ns
+                __delay_cycles(4); // 20ns
+            }
+        } else {
+            for (j = 0; j < frame_buffer_size / 2; j += 1) {
+                write_short_to_spi(0xFFFF); //230ns
+                __delay_cycles(4); // 20ns
+
+                write_short_to_spi(frame_16[j]); //230ns
+                __delay_cycles(24); // 120ns
+
+                write_short_to_spi(0x0000); //230ns
+                __delay_cycles(4); // 20ns
+            }
         }
 
         // Wait for the ARM to be ready for the next frame
         *flag_pru = 1;
-        while (*flag_pru == 1) {}
+        while (*flag_pru == 1);
 
         // The 50 us reset code needed by led strips.
         __R30 = 0;
         __delay_cycles(12000);
-
     }
 }
