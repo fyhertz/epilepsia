@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "server.h"
+#include "opcserver.h"
 #include "sha1.h"
 #include <algorithm>
 #include <arpa/inet.h>
@@ -31,17 +31,17 @@
 
 namespace epilepsia {
 
-server::server(std::initializer_list<uint16_t> ports)
+opc_server::opc_server(std::initializer_list<uint16_t> ports)
     : ports_(ports)
 {
 }
 
-bool server::start()
+bool opc_server::start()
 {
     if (!running_) {
         if (listen()) {
             running_ = true;
-            thread_ = std::thread(&server::run, this);
+            thread_ = std::thread(&opc_server::run, this);
             return true;
         }
         return false;
@@ -49,7 +49,7 @@ bool server::start()
     return true;
 }
 
-void server::stop()
+void opc_server::stop()
 {
     if (running_) {
         running_ = false;
@@ -57,7 +57,7 @@ void server::stop()
     }
 }
 
-bool server::listen()
+bool opc_server::listen()
 {
     // Create a server socket for each requested port.
     for (auto& port : ports_) {
@@ -86,7 +86,7 @@ bool server::listen()
     return true;
 }
 
-void server::run()
+void opc_server::run()
 {
     uint32_t timeout_ms = 2000;
     fd_set active_fd_set, read_fd_set;
@@ -136,7 +136,7 @@ void server::run()
     }
 }
 
-void server::call_handler(uint16_t payload_len, uint8_t* opc_packet)
+void opc_server::call_handler(uint16_t payload_len, uint8_t* opc_packet)
 {
     if (opc_packet[1] == static_cast<int>(opc_command::set_pixels)) {
         handlers_[0](opc_packet[0], payload_len, opc_packet + 4);
@@ -145,7 +145,7 @@ void server::call_handler(uint16_t payload_len, uint8_t* opc_packet)
     }
 }
 
-bool server::Client::read()
+bool opc_server::Client::read()
 {
     if (state == client_state::opc) {
         return handle_opc();
@@ -180,7 +180,7 @@ bool server::Client::read()
     return true;
 }
 
-bool server::Client::handle_opc()
+bool opc_server::Client::handle_opc()
 {
     ssize_t len = 0;
 
@@ -225,7 +225,7 @@ bool server::Client::handle_opc()
     return true;
 }
 
-bool server::Client::handle_websocket_handshake()
+bool opc_server::Client::handle_websocket_handshake()
 {
     char* buf = reinterpret_cast<char*>(buffer.data());
     ssize_t len = recv(fd, buf + received, buffer.size() - received, 0);
@@ -264,7 +264,7 @@ bool server::Client::handle_websocket_handshake()
             sha1((key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"s).c_str()).finalize().print_base64(result);
 
             auto reply = "HTTP/1.1 101 Switching Protocols\r\n"
-                         "server: epilepsia\r\n"
+                         "Server: epilepsia\r\n"
                          "Upgrade: websocket\r\n"
                          "Connection: Upgrade\r\n"
                          "Sec-WebSocket-Accept: "s;
@@ -288,7 +288,7 @@ bool server::Client::handle_websocket_handshake()
     }
 }
 
-bool server::Client::handle_websocket_data()
+bool opc_server::Client::handle_websocket_data()
 {
     ssize_t len = 0;
 

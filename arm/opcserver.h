@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef EPILEPSIASERVER_H
-#define EPILEPSIASERVER_H
+#ifndef EPILEPSIAOPCSERVER_H
+#define EPILEPSIAOPCSERVER_H
 
 #include <atomic>
 #include <functional>
@@ -32,14 +32,14 @@ enum class opc_command {
     system_exclusive = 0xFF
 };
 
-class server {
+class opc_server {
 public:
     using Handler = std::function<void(uint8_t, uint16_t, uint8_t*)>;
 
-    server(std::initializer_list<uint16_t> ports);
+    opc_server(std::initializer_list<uint16_t> ports);
 
-    server(server const&) = delete;
-    server& operator=(server const&) = delete;
+    opc_server(opc_server const&) = delete;
+    opc_server& operator=(opc_server const&) = delete;
 
     bool start();
     void stop();
@@ -57,8 +57,8 @@ private:
 
     class Client {
     public:
-        Client(int& fd_, server& server)
-            : fd(fd_), server_(server) {}
+        Client(int& fd_, opc_server& opc_server)
+            : fd(fd_), server_(opc_server) {}
 
         bool read();
 
@@ -80,7 +80,7 @@ private:
         std::array<uint8_t, 4> masking_key_;
         size_t received{ 0 };
         uint16_t payload_length{ 0 };
-        server& server_;
+        opc_server& server_;
     };
 
     std::thread thread_;
@@ -93,4 +93,4 @@ private:
 
 } // namespace epilepsia
 
-#endif // EPILEPSIASERVER_H
+#endif // EPILEPSIAOPCSERVER_H

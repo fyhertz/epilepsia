@@ -16,7 +16,7 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "leddriver.h"
-#include "server.h"
+#include "opcserver.h"
 #include <chrono>
 #include <iostream>
 #include <signal.h>
@@ -44,7 +44,7 @@ void estimate_frame_rate()
 int main(int argc, char* argv[])
 {
 
-    epilepsia::server server{ 7890 };
+    epilepsia::opc_server server{ 7890 };
     epilepsia::led_driver display(120);
 
     display.set_brightness(0.1f);

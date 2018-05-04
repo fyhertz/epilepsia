@@ -2,7 +2,7 @@
 BIN := epilepsia
 
 # source files
-SRCS := server.cpp leddriver.cpp main.cpp
+SRCS := opcserver.cpp leddriver.cpp main.cpp
 
 # intermediate directory for generated object files
 OBJDIR := .o
