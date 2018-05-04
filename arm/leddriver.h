@@ -34,8 +34,7 @@ public:
     led_driver(const size_t strip_length);
     ~led_driver();
 
-    uint8_t* get_frame_buffer();
-    void commit_frame_buffer();
+    void commit_frame_buffer(uint8_t* buffer, int len);
     void clear();
 
     void set_brightness(const float brightness);
@@ -43,7 +42,7 @@ public:
 
 private:
     void wait_for_pru();
-    void remap_bits();
+    void remap_bits(uint8_t* buffer, int len);
     void update_lut();
     int get_frame_rate();
 
@@ -55,7 +54,6 @@ private:
     uint8_t* shared_memory_;
     uint8_t* flag_pru_[2];
     uint8_t* frame_;
-    uint8_t frame_buffer_[12 * 1024];
     uint8_t lut_[2][256];
     float brightness_{ 0.1f };
     bool dithering_{ true };

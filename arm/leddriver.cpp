@@ -66,21 +66,15 @@ led_driver::~led_driver()
     close(mem_fd_);
 }
 
-uint8_t* led_driver::get_frame_buffer()
-{
-    return frame_buffer_;
-}
-
 void led_driver::clear()
 {
-    memset(frame_buffer_, 0, frame_buffer_size_);
-    commit_frame_buffer();
+    uint8_t buf[frame_buffer_size_]{};
+    commit_frame_buffer(buf, frame_buffer_size_);
 }
 
-void led_driver::commit_frame_buffer()
+void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
 {
-    remap_bits();
-    //remap_bits();
+    remap_bits(buffer, len);
 }
 
 void led_driver::wait_for_pru()
@@ -93,35 +87,39 @@ void led_driver::wait_for_pru()
     *flag_pru_[1] = 0;
 }
 
-void led_driver::remap_bits()
+void led_driver::remap_bits(uint8_t* buffer, int len)
 {
     uint8_t tmp1[frame_buffer_size_];
-    uint8_t p;
+    uint8_t *buf = tmp1;
 
-    memcpy(tmp1, frame_buffer_, frame_buffer_size_);
+    if (len < frame_buffer_size_) {
+        memcpy(buf, buffer, len);
+    } else {
+        buf = buffer;
+    }
 
     // RGB to GRB, gamma correction and brightness adjustment
     for (auto i = 0; i < frame_buffer_size_; i += 3) {
-        p = tmp1[i];
-        tmp1[i] = lut_[0][tmp1[i + 1]];
-        tmp1[i + 1] = lut_[0][p];
-        tmp1[i + 2] = lut_[0][tmp1[i + 2]];
+        uint8_t p = buf[i];
+        buf[i] = lut_[0][buf[i + 1]];
+        buf[i + 1] = lut_[0][p];
+        buf[i + 2] = lut_[0][buf[i + 2]];
     }
 
     // Every two lines of the display is wired upside-down
     for (auto i = bytes_per_strip_ / 2; i < frame_buffer_size_; i += bytes_per_strip_) {
         for (auto j = 0; j < bytes_per_strip_ / 4; j += 3) {
-            p = tmp1[i + j];
-            tmp1[i + j] = tmp1[i + bytes_per_strip_ / 2 - 1 - j - 2];
-            tmp1[i + bytes_per_strip_ / 2 - 1 - j - 2] = p;
+            uint8_t p = buf[i + j];
+            buf[i + j] = buf[i + bytes_per_strip_ / 2 - 1 - j - 2];
+            buf[i + bytes_per_strip_ / 2 - 1 - j - 2] = p;
 
-            p = tmp1[i + j + 1];
-            tmp1[i + j + 1] = tmp1[i + bytes_per_strip_ / 2 - 1 - j - 1];
-            tmp1[i + bytes_per_strip_ / 2 - 1 - j - 1] = p;
+            p = buf[i + j + 1];
+            buf[i + j + 1] = buf[i + bytes_per_strip_ / 2 - 1 - j - 1];
+            buf[i + bytes_per_strip_ / 2 - 1 - j - 1] = p;
 
-            p = tmp1[i + j + 2];
-            tmp1[i + j + 2] = tmp1[i + bytes_per_strip_ / 2 - 1 - j];
-            tmp1[i + bytes_per_strip_ / 2 - 1 - j] = p;
+            p = buf[i + j + 2];
+            buf[i + j + 2] = buf[i + bytes_per_strip_ / 2 - 1 - j];
+            buf[i + bytes_per_strip_ / 2 - 1 - j] = p;
         }
     }
 
@@ -129,7 +127,7 @@ void led_driver::remap_bits()
     // serial to parallel shift registers
     {
         uint16_t tmp2[frame_buffer_size_ / 2];
-        uint32_t* tmp1r = reinterpret_cast<uint32_t*>(tmp1);
+        uint32_t* tmp1r = reinterpret_cast<uint32_t*>(buf);
 
         for (auto i = 0, ii = 0; i < bytes_per_strip_ / 4; i++, ii += 32) {
             auto f = [&i, &ii, &tmp1r, &tmp2, this](auto offset) {
