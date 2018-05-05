@@ -23,16 +23,25 @@
 
 namespace epilepsia {
 
-led_driver::led_driver(const size_t strip_length)
-    : strip_length_(strip_length + strip_length % 4)
-    , // has to be a multiple of 4
-    bytes_per_strip_(strip_length_ * 3)
-    , frame_buffer_size_(bytes_per_strip_ * 16)
+led_driver::led_driver(const int strip_length, const int strip_count)
+    : strip_count_(strip_count) // 8, 16 or 32
+    , strip_length_(strip_length) // has to be a multiple of 4
+    , bytes_per_strip_(strip_length_ * 3)
+    , frame_buffer_size_(bytes_per_strip_ * strip_count)
 {
+    if (strip_length % 4 != 0) {
+        fprintf(stderr, "The length of your strips has to be a multiple of 4\n");
+        std::exit(EXIT_FAILURE);
+    }
+
+    if (strip_count != 8 && strip_count != 16 && strip_count != 32) {
+        fprintf(stderr, "Invalid number of strips\n");
+        std::exit(EXIT_FAILURE);
+    }
 
     // PRU shared mem = 12kB
     if (frame_buffer_size_ > 12 * 1024 - 4) {
-        fprintf(stderr, "Not enough memory");
+        fprintf(stderr, "Not enough memory\n");
         std::exit(EXIT_FAILURE);
     }
 
@@ -42,7 +51,7 @@ led_driver::led_driver(const size_t strip_length)
         std::exit(EXIT_FAILURE);
     }
 
-    // Address of the PRUs shared memory in a am335 soc
+    // Address of the PRUs shared memory on a am335 soc
     shared_memory_ = static_cast<uint8_t*>(mmap(0, 0x00003000, PROT_WRITE | PROT_READ, MAP_SHARED, mem_fd_, 0x4A300000 + 0x00010000));
     if (shared_memory_ == NULL) {
         fprintf(stderr, "Failed to map the device (%s)\n", strerror(errno));
@@ -53,8 +62,10 @@ led_driver::led_driver(const size_t strip_length)
     flag_pru_[0] = &shared_memory_[0];
     flag_pru_[1] = &shared_memory_[1];
     shared_memory_[2] = strip_length_ & 0xFF;
-    frame_ = &shared_memory_[4];
+    shared_memory_[3] = strip_count_;
+    frame_ = reinterpret_cast<uint32_t*>(&shared_memory_[4]);
 
+    printf("Strip count: %d\n", strip_count_);
     printf("Strip length: %d\n", strip_length_);
     printf("Frame buffer size: %d\n", frame_buffer_size_);
 
@@ -68,13 +79,57 @@ led_driver::~led_driver()
 
 void led_driver::clear()
 {
-    uint8_t buf[frame_buffer_size_]{};
+    uint8_t buf[frame_buffer_size_];
+    memset(buf, 0, frame_buffer_size_);
     commit_frame_buffer(buf, frame_buffer_size_);
 }
 
 void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
 {
-    remap_bits(buffer, len);
+    // RGB to GRB, gamma correction and brightness adjustment
+    for (auto i = 0; i < frame_buffer_size_; i += 3) {
+        uint8_t p = buffer[i];
+        buffer[i] = lut_[0][buffer[i + 1]];
+        buffer[i + 1] = lut_[0][p];
+        buffer[i + 2] = lut_[0][buffer[i + 2]];
+    }
+
+    // Every two lines of the display is wired upside-down
+    for (auto i = bytes_per_strip_ / 2; i < frame_buffer_size_; i += bytes_per_strip_) {
+        for (auto j = 0; j < bytes_per_strip_ / 4; j += 3) {
+            uint8_t p = buffer[i + j];
+            buffer[i + j] = buffer[i + bytes_per_strip_ / 2 - 1 - j - 2];
+            buffer[i + bytes_per_strip_ / 2 - 1 - j - 2] = p;
+
+            p = buffer[i + j + 1];
+            buffer[i + j + 1] = buffer[i + bytes_per_strip_ / 2 - 1 - j - 1];
+            buffer[i + bytes_per_strip_ / 2 - 1 - j - 1] = p;
+
+            p = buffer[i + j + 2];
+            buffer[i + j + 2] = buffer[i + bytes_per_strip_ / 2 - 1 - j];
+            buffer[i + bytes_per_strip_ / 2 - 1 - j] = p;
+        }
+    }
+
+    uint32_t tmp[frame_buffer_size_ / 4];
+    uint32_t* in = reinterpret_cast<uint32_t*>(buffer);
+    uint32_t out[frame_buffer_size_ / 4];
+
+    if (len < frame_buffer_size_) {
+        memcpy(tmp, in, len);
+        in = tmp;
+    }
+
+    if (strip_count_ == 8) {
+        remap_bits<uint8_t>(in, out, bytes_per_strip_ / 4);
+    } else if (strip_count_ == 16) {
+        remap_bits<uint16_t>(in, out, bytes_per_strip_ / 4);
+    } else {
+        remap_bits<uint32_t>(in, out, bytes_per_strip_ / 4);
+    }
+
+    wait_for_pru();
+    memcpy(frame_, out, frame_buffer_size_); // 280us for 5760 bytes
 }
 
 void led_driver::wait_for_pru()
@@ -87,69 +142,24 @@ void led_driver::wait_for_pru()
     *flag_pru_[1] = 0;
 }
 
-void led_driver::remap_bits(uint8_t* buffer, int len)
+template <typename T>
+void led_driver::remap_bits(uint32_t* in, uint32_t* out, const int len)
 {
-    uint8_t tmp1[frame_buffer_size_];
-    uint8_t *buf = tmp1;
+    constexpr const uint32_t mask = sizeof(T) == 4 ? 0x00000001 : sizeof(T) == 2 ? 0x00010001 : 0x01010101;
 
-    if (len < frame_buffer_size_) {
-        memcpy(buf, buffer, len);
-    } else {
-        buf = buffer;
-    }
-
-    // RGB to GRB, gamma correction and brightness adjustment
-    for (auto i = 0; i < frame_buffer_size_; i += 3) {
-        uint8_t p = buf[i];
-        buf[i] = lut_[0][buf[i + 1]];
-        buf[i + 1] = lut_[0][p];
-        buf[i + 2] = lut_[0][buf[i + 2]];
-    }
-
-    // Every two lines of the display is wired upside-down
-    for (auto i = bytes_per_strip_ / 2; i < frame_buffer_size_; i += bytes_per_strip_) {
-        for (auto j = 0; j < bytes_per_strip_ / 4; j += 3) {
-            uint8_t p = buf[i + j];
-            buf[i + j] = buf[i + bytes_per_strip_ / 2 - 1 - j - 2];
-            buf[i + bytes_per_strip_ / 2 - 1 - j - 2] = p;
-
-            p = buf[i + j + 1];
-            buf[i + j + 1] = buf[i + bytes_per_strip_ / 2 - 1 - j - 1];
-            buf[i + bytes_per_strip_ / 2 - 1 - j - 1] = p;
-
-            p = buf[i + j + 2];
-            buf[i + j + 2] = buf[i + bytes_per_strip_ / 2 - 1 - j];
-            buf[i + bytes_per_strip_ / 2 - 1 - j] = p;
-        }
-    }
-
-    // We reorder the bits of the buffer for the
-    // serial to parallel shift registers
-    {
-        uint16_t tmp2[frame_buffer_size_ / 2];
-        uint32_t* tmp1r = reinterpret_cast<uint32_t*>(buf);
-
-        for (auto i = 0, ii = 0; i < bytes_per_strip_ / 4; i++, ii += 32) {
-            auto f = [&i, &ii, &tmp1r, &tmp2, this](auto offset) {
-                for (auto j = 0; j < 8; j++) {
-                    uint32_t m = 0;
-                    for (auto k = 0, kk = 0; k < 16; k++, kk += bytes_per_strip_ / 4) {
-                        uint32_t n = tmp1r[i + kk];
-                        // We assume the system is little-endian.
-                        // Otherwise, the first shift should be: n >> (15 - offset - j)
-                        m |= (((n >> (7 + offset - j)) & 0x00010001) << (15 - k));
-                    }
-                    // Assuming little-endian here as well
-                    tmp2[ii + j + offset + 00] = (m >> 0) & 0xFFFF;
-                    tmp2[ii + j + offset + 16] = (m >> 16) & 0xFFFF;
+    for (auto i = 0, ii = 0; i < len; i++, ii += 32) {
+        for (size_t l = 0; l < sizeof(T) * 8; l += 8) {
+            for (auto j = 0; j < 8; j++) {
+                uint32_t m = 0;
+                for (size_t k = 0, kk = 0; k < sizeof(T) * 8; k++, kk += len) {
+                    uint32_t n = in[i + kk];
+                    m |= (((n >> (7 + l - j)) & mask) << (sizeof(T) * 8 - 1 - k));
                 }
-            };
-            f(0);
-            f(8);
+                for (size_t k = 0; k < 32; k += sizeof(T) * 8) {
+                    reinterpret_cast<T*>(out)[ii + j + l + k] = (m >> k) & static_cast<T>(0xFFFFFFFF);
+                }
+            }
         }
-
-        wait_for_pru();
-        memcpy(frame_, tmp2, frame_buffer_size_); // 280us for 5760 bytes
     }
 }
 

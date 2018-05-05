@@ -31,7 +31,7 @@ public:
     led_driver& operator=(led_driver const&) = delete;
     led_driver& operator=(led_driver&&) = delete;
 
-    led_driver(const size_t strip_length);
+    led_driver(const int strip_length, const int strip_count);
     ~led_driver();
 
     void commit_frame_buffer(uint8_t* buffer, int len);
@@ -42,10 +42,13 @@ public:
 
 private:
     void wait_for_pru();
-    void remap_bits(uint8_t* buffer, int len);
     void update_lut();
     int get_frame_rate();
 
+    template <typename T>
+    static void remap_bits(uint32_t* in, uint32_t* out, int len);
+
+    const int strip_count_;
     const int strip_length_;
     const int bytes_per_strip_;
     const int frame_buffer_size_;
@@ -53,7 +56,7 @@ private:
     int mem_fd_;
     uint8_t* shared_memory_;
     uint8_t* flag_pru_[2];
-    uint8_t* frame_;
+    uint32_t* frame_;
     uint8_t lut_[2][256];
     float brightness_{ 0.1f };
     bool dithering_{ true };

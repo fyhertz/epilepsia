@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 {
 
     epilepsia::opc_server server{ 7890 };
-    epilepsia::led_driver display(120);
+    epilepsia::led_driver display(120, 16);
 
     display.set_brightness(0.1f);
     display.set_dithering(true);
@@ -56,9 +56,7 @@ int main(int argc, char* argv[])
     });
 
     server.set_handler<epilepsia::opc_command::set_pixels>([&](uint8_t channel, uint16_t length, uint8_t* pixels) {
-        auto* fb = display.get_frame_buffer();
-        memcpy(fb, pixels, (length > 60 * 32 * 3) ? 60 * 32 * 3 : length);
-        display.commit_frame_buffer();
+        display.commit_frame_buffer(pixels, length);
         estimate_frame_rate();
     });
 
