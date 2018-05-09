@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Firmware of the PRUs. 
+ * Firmware of the PRUs.
  * Written in C++03 because I'm building it with the clpru compiler.
  * 
  */
@@ -97,17 +97,14 @@ void main(void)
         const uint8_t strip_count = shared_memory[3];
 
         if (strip_count == 8 && PRU_ID == 0) {
-            // 8 strips, handler by PRU 0
+            // 8 strips, handled by PRU 0
             write_frame<uint16_t, uint8_t, 8>(1);
         } else if (strip_count == 16 && PRU_ID == 0) {
             // 16 strips, handled by PRU 0
             write_frame<uint16_t, uint16_t, 16>(1);
         } else if (strip_count == 32) {
-            // 32 strips, both PRU are needed
+            // 32 strips, both PRUs needed
             write_frame<uint8_t, uint16_t, 32>(2);
-        } else {
-            // PRU 1 not needed for 8 and 16 led strips
-            __halt();
         }
 
         // The 50 us reset code needed by led strips.
