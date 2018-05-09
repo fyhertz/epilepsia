@@ -12,6 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * 
+ * Firmware of the PRUs. 
+ * Written in C++03 because I'm building it with the clpru compiler.
+ * 
  */
 
 #include "resource_table_pru.h"
@@ -20,17 +24,17 @@
 #include <string.h>
 
 #if PRU_ID == 1
-#define P8_28 10 // Wired to SDI of second shift register
+#define P8_28 10 // Wired to data input of shift register
+#define P8_43 2  // Wired to data input of shift register
 #define P8_42 5
-#define P8_43 2
 #define P8_46 1
 #define CLK P8_42
 #define SDO P8_43
 #define LATCH P8_46
 //#define ENABLE P8_28
 #elif PRU_ID == 0
-#define P8_11 15 // Wired to SDI of second shift register
-#define P9_25 7
+#define P8_11 15 // Wired to data input of shift register
+#define P9_25 7  // Wired to data input of shift register
 #define P9_27 5
 #define P9_29 1
 #define P9_31 0
@@ -90,18 +94,19 @@ void main(void)
 {
 
     while (1) {
-        uint8_t strip_count = shared_memory[3];
+        const uint8_t strip_count = shared_memory[3];
 
         if (strip_count == 8 && PRU_ID == 0) {
-            // 8 strips
+            // 8 strips, handler by PRU 0
             write_frame<uint16_t, uint8_t, 8>(1);
         } else if (strip_count == 16 && PRU_ID == 0) {
-            // 16 strips
+            // 16 strips, handled by PRU 0
             write_frame<uint16_t, uint16_t, 16>(1);
         } else if (strip_count == 32) {
-            // 32 strips
+            // 32 strips, both PRU are needed
             write_frame<uint8_t, uint16_t, 32>(2);
         } else {
+            // PRU 1 not needed for 8 and 16 led strips
             __halt();
         }
 

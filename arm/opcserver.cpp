@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "opcserver.h"
-#include "sha1.h"
+#include "opcserver.hpp"
+#include "sha1.hpp"
 #include <algorithm>
 #include <arpa/inet.h>
 #include <errno.h>

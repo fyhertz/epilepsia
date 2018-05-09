@@ -15,8 +15,8 @@
  */
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "leddriver.h"
-#include "opcserver.h"
+#include "leddriver.hpp"
+#include "opcserver.hpp"
 #include <chrono>
 #include <iostream>
 #include <signal.h>

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "leddriver.h"
+#include "leddriver.hpp"
 #include <fcntl.h>
 #include <iostream>
 #include <string.h>
