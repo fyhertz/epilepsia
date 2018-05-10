@@ -25,7 +25,7 @@
 
 #if PRU_ID == 1
 #define P8_28 10 // Wired to data input of shift register
-#define P8_43 2  // Wired to data input of shift register
+#define P8_43 2 // Wired to data input of shift register
 #define P8_42 5
 #define P8_46 1
 #define CLK P8_42
@@ -34,7 +34,7 @@
 //#define ENABLE P8_28
 #elif PRU_ID == 0
 #define P8_11 15 // Wired to data input of shift register
-#define P9_25 7  // Wired to data input of shift register
+#define P9_25 7 // Wired to data input of shift register
 #define P9_27 5
 #define P9_29 1
 #define P9_31 0
@@ -67,12 +67,11 @@ inline void write_to_spi(const U out)
     __R30 |= 1 << LATCH; // set
 }
 
-template <class T, class U, const int strip_count>
+template <class U, const int strip_count>
 inline void write_frame(const int step)
 {
     const int frame_buffer_size = shared_memory[2] * 3 * strip_count;
     const U* frame_buffer = reinterpret_cast<const U*>(shared_memory + 4);
-    volatile T* flag_pru = reinterpret_cast<T*>(shared_memory + PRU_ID);
 
     for (int i = PRU_ID; i < frame_buffer_size / sizeof(U); i += step) {
         write_to_spi(static_cast<U>(0xFFFF)); //230ns
@@ -84,28 +83,37 @@ inline void write_frame(const int step)
         write_to_spi(static_cast<U>(0x0000)); //230ns
         __delay_cycles(4); // 20ns
     }
-
-    // Wait for the ARM to be ready for the next frame
-    *flag_pru = static_cast<T>(0x0101);
-    while (*flag_pru);
 }
 
 void main(void)
 {
+    volatile uint8_t* flag_pru = shared_memory + PRU_ID;
+
+    // Wait for the ARM to send a first frame
+    *flag_pru = 0x01;
+    while (*flag_pru);
 
     while (1) {
         const uint8_t strip_count = shared_memory[3];
 
         if (strip_count == 8 && PRU_ID == 0) {
             // 8 strips, handled by PRU 0
-            write_frame<uint16_t, uint8_t, 8>(1);
+            write_frame<uint8_t, 8>(1);
         } else if (strip_count == 16 && PRU_ID == 0) {
             // 16 strips, handled by PRU 0
-            write_frame<uint16_t, uint16_t, 16>(1);
+            write_frame<uint16_t, 16>(1);
         } else if (strip_count == 32) {
             // 32 strips, both PRUs needed
-            write_frame<uint8_t, uint16_t, 32>(2);
+            write_frame<uint16_t, 32>(2);
+        } else {
+            // Halt PRU 1 if we don't need it
+            // or halt running PRUs if led_driver::halt_prus is called
+            __halt();
         }
+
+        // Wait for the ARM to be ready for the next frame
+        *flag_pru = 0x01;
+        while (*flag_pru);
 
         // The 50 us reset code needed by led strips.
         __R30 = 0;

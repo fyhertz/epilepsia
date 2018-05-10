@@ -29,6 +29,8 @@ led_driver::led_driver(const int strip_length, const int strip_count)
     , bytes_per_strip_(strip_length_ * 3)
     , frame_buffer_size_(bytes_per_strip_ * strip_count)
 {
+
+    // remap_bits needs strip_length > 4
     if (strip_length % 4 != 0) {
         fprintf(stderr, "The length of your strips has to be a multiple of 4\n");
         std::exit(EXIT_FAILURE);
@@ -59,10 +61,9 @@ led_driver::led_driver(const int strip_length, const int strip_count)
         std::exit(EXIT_FAILURE);
     }
 
-    flag_pru_[0] = &shared_memory_[0];
-    flag_pru_[1] = &shared_memory_[1];
     shared_memory_[2] = strip_length_ & 0xFF;
     shared_memory_[3] = strip_count_;
+    flag_pru_ = reinterpret_cast<uint16_t*>(shared_memory_);
     frame_ = reinterpret_cast<uint32_t*>(&shared_memory_[4]);
 
     printf("Strip count: %d\n", strip_count_);
@@ -74,7 +75,24 @@ led_driver::led_driver(const int strip_length, const int strip_count)
 
 led_driver::~led_driver()
 {
+    halt_prus();
     close(mem_fd_);
+}
+
+void led_driver::set_brightness(const float brightness)
+{
+    if (brightness_ != brightness) {
+        brightness_ = brightness;
+        update_lut();
+    }
+}
+
+void led_driver::set_dithering(const bool dithering)
+{
+    if (dithering_ != dithering) {
+        dithering_ = dithering;
+        update_lut();
+    }
 }
 
 void led_driver::clear()
@@ -128,18 +146,40 @@ void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
         remap_bits<uint32_t>(in, out, bytes_per_strip_ / 4);
     }
 
-    wait_for_pru();
+    wait_for_prus();
     memcpy(frame_, out, frame_buffer_size_); // 280us for 5760 bytes
 }
 
-void led_driver::wait_for_pru()
+bool led_driver::prus_waiting() const {
+    return strip_count_ == 32 ? *flag_pru_ == 0x0101 : *flag_pru_ > 0;
+}
+
+void led_driver::wait_for_prus()
 {
-    // Wait for both PRU to be ready for the next frame
-    while (*flag_pru_[0] == 0 || *flag_pru_[1] == 0) {
+    int n = 0;
+    // Wait for PRU(s) to be ready for the next frame
+    while (!prus_waiting()) {
         usleep(10);
+        if (n++ > 10000) {
+            // PRU(s) not running... we discard the frame
+            break;
+        }
     }
-    *flag_pru_[0] = 0;
-    *flag_pru_[1] = 0;
+    *flag_pru_ = 0;
+}
+
+void led_driver::halt_prus()
+{
+    printf("Waiting for PRUs... ");
+    // We wait 200 ms, enough to be sure that PRU 0 or (PRU 0 and PRU 1) is/are waiting.
+    usleep(200000);
+    shared_memory_[3] = 0xFF;
+    if (!prus_waiting()) {
+        printf("PRU(s) not running\n");
+    } else {
+        printf("OK\n");
+    }
+    *flag_pru_ = 0;
 }
 
 template <typename T>
@@ -160,22 +200,6 @@ void led_driver::remap_bits(uint32_t* in, uint32_t* out, const int len)
                 }
             }
         }
-    }
-}
-
-void led_driver::set_brightness(const float brightness)
-{
-    if (brightness_ != brightness) {
-        brightness_ = brightness;
-        update_lut();
-    }
-}
-
-void led_driver::set_dithering(const bool dithering)
-{
-    if (dithering_ != dithering) {
-        dithering_ = dithering;
-        update_lut();
     }
 }
 
