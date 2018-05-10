@@ -1,23 +1,39 @@
 ## What is this thing?
 
-Epilepsia is a fat two square meters LED display built with [Neopixels](https://learn.adafruit.com/adafruit-neopixel-uberguide) (well, WS2812B leds), a [beaglebone black](https://beagleboard.org/black) and a few other components. It has a resolution of 60x32 pixels and can run at a maximum of 250 fps.
+Epilepsia is a cape for the [beaglebone black](https://beagleboard.org/black) capable of driving up to 32 strips of [Neopixels](https://learn.adafruit.com/adafruit-neopixel-uberguide) (actually, WS2812B leds) in parallel.
+
+### Features
+
+ * Can drive 64x32 neopixels at around 450-500 fps
+ * Support the [Open Pixel Control server](http://openpixelcontrol.org/) and websockets for feeding data.
+ * Can be configured for 8, 16 or 32 outputs. You only have to solder what you need.
+ * Gamma correction
+ * Brightness parameter
+
+### Architecture
+
+The [led_driver](https://github.com/fyhertz/epilepsia/blob/master/arm/leddriver.cpp) handles the communication with the PRUs. Each PRU can drive 16 WS2812 led strips in parallel using two CD54HC4094 serial to parallel shift register. The bits of the frame buffer are reordered by the beablebone's CPU before being copied to the PRUs shared memory. Each PRU just has to sequentially read that memory to fill its shift registers. The single wire protocol of the led strips is implemented by switching the parallel outputs of the CD54HC4094 IC.
+
+The following schematic shows the wiring the CD54HC4094s and the PRUs:
+
+![Schematic](https://raw.githubusercontent.com/fyhertz/epilepsia/master/schematics/schematic.png)
+
+## Build instructions
+
+TODO
+
+## Example: massive led panel with 60x32 pixels
+
+The two gifs below show the epilepsia cape driving a two square meter led panel:
 
 ![](http://guigui.us/epilepsia/gifs/demo2.gif)
 ![](http://guigui.us/epilepsia/gifs/demo1.gif)
 
-## Architecture
+### Prototype board
 
-### Driving the WS2812 led strips
+![](http://guigui.us/epilepsia/images/prototype.jpg)
 
-The led panel has 32 rows of 60 pixels but is composed of 16 led strips of 120 pixels. For instance row 2 is chained with row 1 and is upside down.
-
-The [LedDisplay](https://github.com/fyhertz/epilepsia/blob/master/arm/leddisplay.cpp) class exposes a frame buffer that will ultimately be drawn on the led panel. Each PRU drives 8 of the 16 WS2812 led strips (half of the panel) in parallel using a CD54HC4094 serial to parallel shift register. The bits of the buffer are reordered by the beablebone's CPU so that one sequential byte written on a PRU memory corresponds to 1 bit for each strip. Consequently, each PRU can just sequentially access half of the buffer copied to its memory to fill the shift register of the CD54HC4094 IC. The single wire protocol of the led strips is then implemented by switching the parallel outputs of the CD54HC4094 IC.
-
-The following schematic shows the wiring between the strips, the CD54HC4094s and the PRUs:
-
-![Schematic](https://raw.githubusercontent.com/fyhertz/epilepsia/master/schematics/schematic.png)
-
-### Supplying power
+### Power supply
 
 According to the [adafruit uberguide](https://learn.adafruit.com/adafruit-neopixel-uberguide), at full brightness a pixel can consume as much as 60 mA. Therefore, the panel could theoretically consume 600 W or 115 A @ 5 V! 
 
@@ -27,16 +43,10 @@ On my setup, the strips are wired to two 18 AWG cables which should be enough to
 
 ### Feeding the panel
 
-The arm firmware starts an [Open Pixel Control server](http://openpixelcontrol.org/) and waits for client to feed frame buffers. The **examples** folder contains some demo clients for the panel.
-
-## Build instructions
-
-TODO
-
-## Notes
-
- * The code can probably be modified to handle 4*8 led strips, the PRUs are spending almost half the time idling.
+The epilepsia firmware starts an [Open Pixel Control server](http://openpixelcontrol.org/) server and waits for clients to feed frame buffers. The examples folder contains some demo clients for the panel.
  
- ## TODO
- 
- * Software estimation of power consumption.
+## TODO
+
+ * Software estimation of power consumption
+ * Beaglepocket support
+ * Dithering
