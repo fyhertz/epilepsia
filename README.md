@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/fyhertz/epilepsia.svg?branch=master)](https://travis-ci.com/fyhertz/epilepsia) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/669e6cb97e7744f1b05ce66e085c8596)](https://www.codacy.com/app/fyhertz/epilepsia?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=fyhertz/epilepsia&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.com/fyhertz/epilepsia.svg?branch=master)](https://travis-ci.com/fyhertz/epilepsia) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/669e6cb97e7744f1b05ce66e085c8596)](https://www.codacy.com/app/fyhertz/epilepsia?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=fyhertz/epilepsia&amp;utm_campaign=Badge_Grade) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Introduction
 
