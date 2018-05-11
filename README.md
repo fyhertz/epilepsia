@@ -1,4 +1,8 @@
-Epilepsia is a user friendly cape for the [beaglebone black](https://beagleboard.org/black) capable of driving up to 32 strips of [neopixels](https://learn.adafruit.com/adafruit-neopixel-uberguide) (actually, WS2812B LEDs) in parallel.
+[![Build Status](https://travis-ci.com/fyhertz/epilepsia.svg?branch=master)](https://travis-ci.com/fyhertz/epilepsia)
+
+## Introduction
+
+Epilepsia is a user friendly cape for the [beaglebone](https://beagleboard.org/black) capable of driving up to 32 strips of [neopixels](https://learn.adafruit.com/adafruit-neopixel-uberguide) (actually, WS2812B LEDs) in parallel.
 
 ![](http://guigui.us/epilepsia/gifs/demo2.gif)
 ![](http://guigui.us/epilepsia/gifs/demo1.gif)
@@ -20,7 +24,30 @@ The following schematic shows the wiring the CD54HC4094s and the PRUs:
 
 ## Build instructions
 
-TODO
+**Cross compiling epilepsia from a linux host:**
+
+1. You will need the clpru C/C++03 compiler from TI to build the PRU firmware:
+```
+wget http://software-dl.ti.com/codegen/esd/cgt_public_sw/PRU/2.2.1/ti_cgt_pru_2.2.1_linux_installer_x86.bin -O clpru.bin
+chmod +x clpru.bin
+./clpru.bin --mode unattended --prefix /opt/ti
+```
+
+2. A C++14 cross compiler is needed for building the ARM linux binary. On debian/ubuntu run:
+```
+sudo apt-get update && apt-get install -y make g++-arm-linux-gnueabihf
+```
+
+3. The project simply uses some plain Makefiles
+```
+make
+```
+
+**You can also compile epilepsia with the provided Dockerfile.** From your clone of the project run:
+```
+docker build -t epilepsia .
+docker run -ti -v `pwd`:/opt/epilepsia epilepsia
+```
 
 ## Example
  
