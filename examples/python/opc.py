@@ -155,7 +155,7 @@ class OpcClient(object):
             0 is a special value which means "all channels".
 
         pixels: A list of 3-tuples representing rgb colors.
-            Each value in the tuple should be in the range 0-255 inclusive. 
+            Each value in the tuple should be in the range 0-255 inclusive.
             For example: [(255, 255, 255), (0, 0, 0), (127, 0, 0)]
             Floats will be rounded down to integers.
             Values outside the legal range will be clamped.
