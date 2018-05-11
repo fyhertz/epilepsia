@@ -16,4 +16,4 @@ before_install:
   - chmod +x clpru.bin
   - ./clpru.bin --mode unattended --prefix /opt/ti
     
-script: make
+script: make HOST=x86 CXX=g++
