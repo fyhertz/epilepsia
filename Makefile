@@ -1,5 +1,5 @@
 # Set this to your local install of clpru
-PRU_CGT = /opt/ti/ti-cgt-pru_2.1.3
+PRU_CGT = /opt/ti/ti-cgt-pru_2.2.1
 
 # Remote execution requires ssh access as root
 SSH_HOST = beagle_root
