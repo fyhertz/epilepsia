@@ -10,13 +10,13 @@ Epilepsia is a user friendly cape for the [beaglebone](https://beagleboard.org/b
 ## Features
 
  * Can drive 64x32 WS2812B LEDs at around 450-500 fps
- * Support the [Open Pixel Control server](http://openpixelcontrol.org/) and websockets for feeding data.
+ * Support the [Open Pixel Control] protocol (http://openpixelcontrol.org/) and websockets for feeding data.
  * Can be configured for 8, 16 or 32 outputs.
  * Gamma correction and brightness settings
 
 ## Architecture
 
-The [led_driver](https://github.com/fyhertz/epilepsia/blob/master/arm/leddriver.cpp) handles the communication with the PRUs. Each PRU can drive 16 WS2812 led strips in parallel using two CD54HC4094 serial to parallel shift register. The bits of the frame buffer are reordered by the beablebone's CPU before being copied to the PRUs shared memory. Each PRU just has to sequentially read that memory to fill its shift registers. The single wire protocol of the led strips is implemented by switching the parallel outputs of the CD54HC4094 IC.
+The [led_driver] class (https://github.com/fyhertz/epilepsia/blob/master/arm/leddriver.cpp) handles the communication with the PRUs. Each PRU can drive 16 WS2812 led strips in parallel using two CD54HC4094 serial to parallel shift register. The bits of the frame buffer are reordered by the beablebone's CPU before being copied to the PRUs shared memory. Each PRU just has to sequentially read that memory to fill its shift registers. The single wire protocol of the led strips is implemented by switching the parallel outputs of the CD54HC4094 IC.
 
 The following schematic shows the wiring the CD54HC4094s and the PRUs:
 
@@ -48,6 +48,8 @@ make
 docker build -t epilepsia .
 docker run -ti -v `pwd`:/opt/epilepsia epilepsia
 ```
+
+The [-v option](https://docs.docker.com/storage/volumes/) is needed to mount the project files in the container. On Windows/Mac OS you might want to replace the `pwd` with the path to the your clone of the project.
 
 ## Example
  

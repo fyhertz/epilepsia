@@ -1,4 +1,4 @@
 exclude_paths:
-  - 'arm/third_parties/**
+  - 'arm/third_parties/**'
   - 'schematics/**'
   - 'datasheets/**'
