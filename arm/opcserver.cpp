@@ -15,7 +15,7 @@
  */
 
 #include "opcserver.hpp"
-#include "sha1.hpp"
+#include <sha1.hpp>
 #include <algorithm>
 #include <arpa/inet.h>
 #include <errno.h>

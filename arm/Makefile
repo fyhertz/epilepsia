@@ -27,11 +27,12 @@ CXX := arm-linux-gnueabihf-g++
 CXXFLAGS := -Wall -Wextra -O3 -std=c++14 -pthread
 CXXFLAGS += -static-libstdc++ -static-libgcc
 CXXFLAGS += -ffast-math -funroll-loops
+CXXFLAGS += -Ithird_parties
 
 # Hack for travis
 # Travis only runs trusty, and trusty has no arm toolchains that supports C++14
 # So to let travis build for x86 we have to remove platform specific flags
-ifeq ($(HOST),"x86")
+ifneq ($(HOST),x86)
 	CXXFLAGS += -march=armv7-a -mtune=cortex-a8 # -mfloat-abi=hard -mfpu=neon
 endif
 
