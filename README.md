@@ -16,7 +16,7 @@ Epilepsia is a user friendly cape for the [beaglebone](https://beagleboard.org/b
 
 ## Architecture
 
-The [led_driver] (https://github.com/fyhertz/epilepsia/blob/master/arm/leddriver.cpp) class handles the communication with the PRUs. Each PRU can drive 16 WS2812 led strips in parallel using two CD54HC4094 serial to parallel shift register. The bits of the frame buffer are reordered by the beablebone's CPU before being copied to the PRUs shared memory. Each PRU just has to sequentially read that memory to fill its shift registers. The single wire protocol of the led strips is implemented by switching the parallel outputs of the CD54HC4094 IC.
+The [led_driver](https://github.com/fyhertz/epilepsia/blob/master/arm/leddriver.cpp) class handles the communication with the PRUs. Each PRU can drive 16 WS2812 led strips in parallel using two CD54HC4094 serial to parallel shift register. The bits of the frame buffer are reordered by the beablebone's CPU before being copied to the PRUs shared memory. Each PRU just has to sequentially read that memory to fill its shift registers. The single wire protocol of the led strips is implemented by switching the parallel outputs of the CD54HC4094 IC.
 
 The following schematic shows the wiring the CD54HC4094s and the PRUs:
 
@@ -45,11 +45,27 @@ make
 
 **You can also compile epilepsia with the provided Dockerfile.** From your clone of the project run:
 ```
-docker build -t epilepsia .
-docker run -ti -v `pwd`:/opt/epilepsia epilepsia
+docker build -t fyhertz/epilepsia .
+docker run -ti -v `pwd`:/opt/epilepsia fyhertz/epilepsia
 ```
 
-The [-v option](https://docs.docker.com/storage/volumes/) is needed to mount the project files in the container. On Windows/Mac OS you might want to replace the `pwd` with the path to the your clone of the project.
+The [-v option](https://docs.docker.com/storage/volumes/) is needed to mount the project files in the container. On Windows/Mac OS you might want to replace the `pwd` command with the path to the your clone of the project.
+
+## Installation instructions
+
+Supported hardware: [beaglebone black](https://beagleboard.org/black), [beaglebone black wireless](https://beagleboard.org/black-wireless), [beaglebone green](https://beagleboard.org/green), [beaglebone green wireless](https://beagleboard.org/green-wireless)
+
+For simplicity sake, this guide assumes that you are using, or are willing to use, a recent firmware image for your device. **As of May 2018**, that means: 
+ - **kernel version > 4.9.** Before that, the pru-rproc driver [behaves differently](https://groups.google.com/d/msg/beagleboard/4P9NdglojBo/qqizuGCZAQAJ)
+ - **U-boot overlays** which have recently [replaced Kernel overlays](https://groups.google.com/d/msg/beagleboard/P_Y5yjJyuu4/yaZfkXfAAgAJ)
+ - **[cape-universal](https://github.com/cdsteinkuehler/beaglebone-universal-io) readily available.** It's a set of device tree overlays that allows you to easily select pin modes with the pin-config command line tool.
+ 
+ If for some reason you don't want to reflash your beaglebone, epilepsia should still work (maybe with some more work) as long as you have the pru-rproc driver (and not the uio_pruss driver).
+
+1. So, if you don't any headache, get the latest official debian build [here](https://beagleboard.org/latest-images) (with debian 9 as of May 2018) and flash your device with it.
+2. Disable the wireless virtual overlay. Right now, epilepsia is using two pins needed by that overlay: P8_11 and P9_31. To do that edit /boot/uEnv.txt and **uncomment "disable_uboot_overlay_wireless=1"**
+3. TODO
+
 
 ## Example
  
