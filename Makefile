@@ -11,6 +11,8 @@ BIN_PRU_1 = pru/gen/am335x-pru1-fw
 PINS = P8_46 P8_43 P8_42 P8_28 # PRU 1
 PINS += P9_25 P9_27 P9_31 P8_11 # PRU 0
 
+SYSFS = /sys/class/remoteproc
+
 .PHONY:
 all: build
 
@@ -24,7 +26,7 @@ clean:
 	@${MAKE} -C pru clean
 
 
-.PHONY: reboot run justrun upload_arm upload_pru upload
+.PHONY: reboot run justrun upload_arm upload_pru upload reset start stop
 
 # Uploads the three binaries to the beaglebone
 upload_pru:
@@ -36,20 +38,28 @@ upload_arm:
 
 upload: upload_arm upload_pru
 
-# Reboots PRUs
-reset:
-	ssh $(SSH_HOST) 'su -c "rmmod -f pru-rproc 2&>1 /dev/null;  modprobe pru-rproc"'
+# Stop PRUs
+stop:
+	ssh $(SSH_HOST) 'su -c "$(foreach pru,1 2,echo stop > $(SYSFS)/remoteproc$(pru)/state;)" 2> /dev/null || true'
 
-# Runs everything
-run: upload reset 
+# Start PRUs
+start:
+	ssh $(SSH_HOST) 'su -c "$(foreach pru,1 2,echo start > $(SYSFS)/remoteproc$(pru)/state;)" 2> /dev/null || true'
+
+# Reboot PRUs
+reset: stop start
+
+# Start epilepsia on beagleboard
+just_run:
 	ssh -t -q $(SSH_HOST) /root/$(notdir $(BIN_ARM))
 
-justrun:
-	ssh -t -q $(SSH_HOST) /root/$(notdir $(BIN_ARM))
+# Run everything
+run: upload reset just_run
 
-# Sets the pins we use to pruout
+# Set the pins we use to pruout
 config:	
-	ssh $(SSH_HOST) 'su -c "$(foreach pin, $(PINS), config-pin -a $(pin) pruout;)"'
+	ssh $(SSH_HOST) 'su -c "$(foreach pin,$(PINS),config-pin -a $(pin) pruout;)' \
+	'cd $(SYSFS); echo am335x-pru0-fw > remoteproc1/firmware;echo am335x-pru1-fw > remoteproc2/firmware"'
 	
 
 
