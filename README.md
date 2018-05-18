@@ -56,16 +56,27 @@ The [-v option](https://docs.docker.com/storage/volumes/) is needed to mount the
 Supported hardware: [beaglebone black](https://beagleboard.org/black), [beaglebone black wireless](https://beagleboard.org/black-wireless), [beaglebone green](https://beagleboard.org/green), [beaglebone green wireless](https://beagleboard.org/green-wireless)
 
 For simplicity sake, this guide assumes that you are using, or are willing to use, a recent firmware image for your device. **As of May 2018**, that means: 
- - **kernel version > 4.9.** Before that, the pru-rproc driver [behaves differently](https://groups.google.com/d/msg/beagleboard/4P9NdglojBo/qqizuGCZAQAJ)
+ - **kernel version > 4.9.** Before that, the pru_rproc driver [behaves differently](https://groups.google.com/d/msg/beagleboard/4P9NdglojBo/qqizuGCZAQAJ)
  - **U-boot overlays** which have recently [replaced Kernel overlays](https://groups.google.com/d/msg/beagleboard/P_Y5yjJyuu4/yaZfkXfAAgAJ)
  - **[cape-universal](https://github.com/cdsteinkuehler/beaglebone-universal-io) readily available.** It's a set of device tree overlays that allows you to easily select pin modes with the pin-config command line tool.
  
- If for some reason you don't want to reflash your beaglebone, epilepsia should still work (maybe with some more work) as long as you have the pru-rproc driver (and not the uio_pruss driver).
+ If for some reason you don't want to reflash your beaglebone, epilepsia should still work (maybe with some more work) as long as you have the pru_rproc driver (and not the uio_pruss driver).
 
-1. So, if you don't any headache, get the latest official debian build [here](https://beagleboard.org/latest-images) (with debian 9 as of May 2018) and flash your device with it.
-2. Disable the wireless virtual overlay. Right now, epilepsia is using two pins needed by that overlay: P8_11 and P9_31. To do that edit /boot/uEnv.txt and **uncomment "disable_uboot_overlay_wireless=1"**
+1. So, if you don't want any headache, get the latest official debian build [here](https://beagleboard.org/latest-images) (with debian 9 as of May 2018) and flash your device with it.
+2. On the bb green wireless: disable the wireless virtual overlay. Right now, epilepsia is using two pins needed by that overlay: P8_11 and P9_31. To do that edit /boot/uEnv.txt and **uncomment "disable_uboot_overlay_wireless=1"**. On the bb black, disable hdmi video: **uncomment "disable_uboot_overlay_video=1"**.
 3. TODO
 
+Optionaly, to avoid unnecessary write access to bb emmc and prolongate its lifespan you can do the following:
+
+1. Use a circular buffer for syslogs: `apt-get install busybox-syslogd; dpkg --purge rsyslog`
+2. Use tmpfs for logs and tmp files. Edit /etc/fstab and append:
+```
+tmpfs           /tmp            tmpfs   nosuid,nodev         0       0
+tmpfs           /var/log        tmpfs   nosuid,nodev         0       0
+tmpfs           /var/tmp        tmpfs   nosuid,nodev         0       0
+```
+3. At this point you can remove logrotate `apt remove --purge logrotate`
+4. You may also not need the following packages: `apt remove --purge dbus cron`
 
 ## Example
  
@@ -73,4 +84,4 @@ For simplicity sake, this guide assumes that you are using, or are willing to us
 
  * Software estimation of power consumption
  * Beaglepocket support
- * Dithering
+ * Temporal dithering
