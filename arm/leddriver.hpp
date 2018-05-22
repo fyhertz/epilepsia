@@ -17,10 +17,11 @@
 #ifndef EPILEPSIADRIVER_H
 #define EPILEPSIADRIVER_H
 
-#include <math.h>
-#include <cstdint>
-#include <thread>
 #include <atomic>
+#include <cstdint>
+#include <math.h>
+#include <thread>
+#include <vector>
 
 namespace epilepsia {
 
@@ -48,6 +49,8 @@ private:
 
     template <typename T>
     static void remap_bits(uint32_t* in, uint32_t* out, int len);
+    template <bool dithering>
+    void update_buffer(uint8_t* buffer);
 
     const int strip_count_;
     const int strip_length_;
@@ -58,9 +61,10 @@ private:
     uint8_t* shared_memory_;
     uint16_t* flag_pru_;
     uint32_t* frame_;
-    uint8_t lut_[2][256];
+    int lut_[256];
     float brightness_{ 0.1f };
     bool dithering_{ true };
+    std::vector<int> residual_;
 };
 }
 

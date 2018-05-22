@@ -66,6 +66,8 @@ led_driver::led_driver(const int strip_length, const int strip_count)
     flag_pru_ = reinterpret_cast<uint16_t*>(shared_memory_);
     frame_ = reinterpret_cast<uint32_t*>(&shared_memory_[4]);
 
+    residual_.resize(frame_buffer_size_);
+
     printf("Strip count: %d\n", strip_count_);
     printf("Strip length: %d\n", strip_length_);
     printf("Frame buffer size: %d\n", frame_buffer_size_);
@@ -89,10 +91,7 @@ void led_driver::set_brightness(const float brightness)
 
 void led_driver::set_dithering(const bool dithering)
 {
-    if (dithering_ != dithering) {
-        dithering_ = dithering;
-        update_lut();
-    }
+    dithering_ = dithering;
 }
 
 void led_driver::clear()
@@ -104,12 +103,19 @@ void led_driver::clear()
 
 void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
 {
-    // RGB to GRB, gamma correction and brightness adjustment
+    uint8_t tmp[frame_buffer_size_];
+
+    if (len < frame_buffer_size_) {
+        memcpy(tmp, buffer, len);
+        buffer = tmp;
+    }
+
+    // RGB to GRB
     for (auto i = 0; i < frame_buffer_size_; i += 3) {
         uint8_t p = buffer[i];
-        buffer[i] = lut_[0][buffer[i + 1]];
-        buffer[i + 1] = lut_[0][p];
-        buffer[i + 2] = lut_[0][buffer[i + 2]];
+        buffer[i] = buffer[i + 1];
+        buffer[i + 1] = p;
+        buffer[i + 2] = buffer[i + 2];
     }
 
     // Every two lines of the display is wired upside-down
@@ -129,14 +135,14 @@ void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
         }
     }
 
-    uint32_t tmp[frame_buffer_size_ / 4];
+    if (dithering_) {
+        update_buffer<true>(buffer);
+    } else {
+        update_buffer<false>(buffer);
+    }
+
     uint32_t* in = reinterpret_cast<uint32_t*>(buffer);
     uint32_t out[frame_buffer_size_ / 4];
-
-    if (len < frame_buffer_size_) {
-        memcpy(tmp, in, len);
-        in = tmp;
-    }
 
     if (strip_count_ == 8) {
         remap_bits<uint8_t>(in, out, bytes_per_strip_ / 4);
@@ -150,7 +156,35 @@ void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
     memcpy(frame_, out, frame_buffer_size_); // 280us for 5760 bytes
 }
 
-bool led_driver::prus_waiting() const {
+template <bool dithering>
+void led_driver::update_buffer(uint8_t* buffer)
+{
+    for (auto i = 0; i < frame_buffer_size_; i++) {
+
+        // Gamma correction and brightness adjustment
+        int d = lut_[buffer[i]];
+
+        // Temporal dithering
+        if (dithering) {
+
+            // Compiles to a single usat ARM instruction
+            auto usat = [](int a) {
+                return a > 65535 ? 65535 : a < 0 ? 0 : a;
+            };
+
+            d += residual_[i];
+            int e = usat(d + 0x80) >> 8;
+            residual_[i] = d - (e * 257);
+            buffer[i] = e;
+
+        } else {
+            buffer[i] = d >> 8;
+        }
+    }
+}
+
+bool led_driver::prus_waiting() const
+{
     return strip_count_ == 32 ? *flag_pru_ == 0x0101 : *flag_pru_ > 0;
 }
 
@@ -225,8 +259,8 @@ void led_driver::update_lut()
     };
 
     for (auto i = 0; i < 256; i++) {
-        lut_[0][i] = std::ceil(gamma8[i] * brightness_);
-        lut_[1][i] = dithering_ ? std::floor(gamma8[i] * brightness_) : lut_[0][i];
+        // lut_[i] between 0 and 0xFFFF
+        lut_[i] = gamma8[i] * 257 * brightness_;
     }
 }
 }

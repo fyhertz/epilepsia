@@ -59,7 +59,7 @@ run: upload reset just_run
 # Set the pins we use to pruout
 config:	
 	ssh $(SSH_HOST) 'su -c "$(foreach pin,$(PINS),config-pin -a $(pin) pruout;)' \
-	'cd $(SYSFS); echo am335x-pru0-fw > remoteproc1/firmware;echo am335x-pru1-fw > remoteproc2/firmware"'
+	'cd $(SYSFS); echo am335x-pru0-fw > remoteproc1/firmware;echo am335x-pru1-fw > remoteproc2/firmware" || true'
 	
 
 

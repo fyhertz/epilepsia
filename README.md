@@ -84,4 +84,4 @@ tmpfs           /var/tmp        tmpfs   nosuid,nodev         0   �
 
  * Software estimation of power consumption
  * Beaglepocket support
- * Temporal dithering
+ * Frame interpolation

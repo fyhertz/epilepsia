@@ -18,7 +18,7 @@ def main(framerate, ip, port):
 
     x_dim = 60
     y_dim = 32
-    speed = 1.0
+    speed = 0.5
 
     client = opc.Client(ip + ':' + str(port))
     frame = np.zeros((y_dim, x_dim, 3), dtype=np.uint8)
