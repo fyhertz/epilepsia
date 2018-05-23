@@ -17,10 +17,8 @@
 #ifndef EPILEPSIADRIVER_H
 #define EPILEPSIADRIVER_H
 
-#include <atomic>
+#include "prudriver.hpp"
 #include <cstdint>
-#include <math.h>
-#include <thread>
 #include <vector>
 
 namespace epilepsia {
@@ -42,13 +40,11 @@ public:
     void set_dithering(const bool dithering);
 
 private:
-    void wait_for_prus();
-    void halt_prus();
     void update_lut();
-    bool prus_waiting() const;
 
     template <typename T>
     static void remap_bits(uint32_t* in, uint32_t* out, int len);
+
     template <bool dithering>
     void update_buffer(uint8_t* buffer);
 
@@ -57,14 +53,11 @@ private:
     const int bytes_per_strip_;
     const int frame_buffer_size_;
 
-    int mem_fd_;
-    uint8_t* shared_memory_;
-    uint16_t* flag_pru_;
-    uint32_t* frame_;
     int lut_[256];
     float brightness_{ 0.1f };
     bool dithering_{ true };
     std::vector<int> residual_;
+    pru_driver pru_driver_;
 };
 }
 

@@ -15,11 +15,9 @@
  */
 
 #include "leddriver.hpp"
-#include <fcntl.h>
 #include <iostream>
-#include <string.h>
-#include <sys/mman.h>
-#include <unistd.h>
+#include <array>
+#include <algorithm>
 
 namespace epilepsia {
 
@@ -28,6 +26,7 @@ led_driver::led_driver(const int strip_length, const int strip_count)
     , strip_length_(strip_length) // has to be a multiple of 4
     , bytes_per_strip_(strip_length_ * 3)
     , frame_buffer_size_(bytes_per_strip_ * strip_count)
+    , pru_driver_(strip_count == 32 ? 2 : 1)
 {
 
     // remap_bits needs strip_length > 4
@@ -47,24 +46,7 @@ led_driver::led_driver(const int strip_length, const int strip_count)
         std::exit(EXIT_FAILURE);
     }
 
-    mem_fd_ = open("/dev/mem", O_RDWR | O_SYNC);
-    if (mem_fd_ < 0) {
-        fprintf(stderr, "Failed to open /dev/mem (%s)\n", strerror(errno));
-        std::exit(EXIT_FAILURE);
-    }
-
-    // Address of the PRUs shared memory on a am335 soc
-    shared_memory_ = static_cast<uint8_t*>(mmap(0, 0x00003000, PROT_WRITE | PROT_READ, MAP_SHARED, mem_fd_, 0x4A300000 + 0x00010000));
-    if (shared_memory_ == NULL) {
-        fprintf(stderr, "Failed to map the device (%s)\n", strerror(errno));
-        close(mem_fd_);
-        std::exit(EXIT_FAILURE);
-    }
-
-    shared_memory_[2] = strip_length_ & 0xFF;
-    shared_memory_[3] = strip_count_;
-    flag_pru_ = reinterpret_cast<uint16_t*>(shared_memory_);
-    frame_ = reinterpret_cast<uint32_t*>(&shared_memory_[4]);
+    pru_driver_.write_config(strip_length, strip_count);
 
     residual_.resize(frame_buffer_size_);
 
@@ -77,8 +59,6 @@ led_driver::led_driver(const int strip_length, const int strip_count)
 
 led_driver::~led_driver()
 {
-    halt_prus();
-    close(mem_fd_);
 }
 
 void led_driver::set_brightness(const float brightness)
@@ -97,8 +77,8 @@ void led_driver::set_dithering(const bool dithering)
 void led_driver::clear()
 {
     uint8_t buf[frame_buffer_size_];
-    memset(buf, 0, frame_buffer_size_);
-    commit_frame_buffer(buf, frame_buffer_size_);
+    std::fill(buf, buf + frame_buffer_size_, 0);
+    pru_driver_.write_frame(buf, frame_buffer_size_);
 }
 
 void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
@@ -106,7 +86,7 @@ void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
     uint8_t tmp[frame_buffer_size_];
 
     if (len < frame_buffer_size_) {
-        memcpy(tmp, buffer, len);
+        std::copy_n(buffer, len, tmp);
         buffer = tmp;
     }
 
@@ -115,7 +95,6 @@ void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
         uint8_t p = buffer[i];
         buffer[i] = buffer[i + 1];
         buffer[i + 1] = p;
-        buffer[i + 2] = buffer[i + 2];
     }
 
     // Every two lines of the display is wired upside-down
@@ -152,8 +131,7 @@ void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
         remap_bits<uint32_t>(in, out, bytes_per_strip_ / 4);
     }
 
-    wait_for_prus();
-    memcpy(frame_, out, frame_buffer_size_); // 280us for 5760 bytes
+    pru_driver_.write_frame(out, frame_buffer_size_ / 4);
 }
 
 template <bool dithering>
@@ -181,39 +159,6 @@ void led_driver::update_buffer(uint8_t* buffer)
             buffer[i] = d >> 8;
         }
     }
-}
-
-bool led_driver::prus_waiting() const
-{
-    return strip_count_ == 32 ? *flag_pru_ == 0x0101 : *flag_pru_ > 0;
-}
-
-void led_driver::wait_for_prus()
-{
-    int n = 0;
-    // Wait for PRU(s) to be ready for the next frame
-    while (!prus_waiting()) {
-        usleep(10);
-        if (n++ > 10000) {
-            // PRU(s) not running... we discard the frame
-            break;
-        }
-    }
-    *flag_pru_ = 0;
-}
-
-void led_driver::halt_prus()
-{
-    printf("Waiting for PRUs... ");
-    // We wait 200 ms, enough to be sure that PRU 0 or (PRU 0 and PRU 1) is/are waiting.
-    usleep(200000);
-    shared_memory_[3] = 0xFF;
-    if (!prus_waiting()) {
-        printf("PRU(s) not running\n");
-    } else {
-        printf("OK\n");
-    }
-    *flag_pru_ = 0;
 }
 
 template <typename T>

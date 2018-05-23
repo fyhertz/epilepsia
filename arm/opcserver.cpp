@@ -36,6 +36,11 @@ opc_server::opc_server(std::initializer_list<uint16_t> ports)
 {
 }
 
+opc_server::opc_server(std::vector<uint16_t> ports)
+    : ports_(ports)
+{
+}
+
 bool opc_server::start()
 {
     if (!running_) {

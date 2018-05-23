@@ -36,7 +36,8 @@ class opc_server {
 public:
     using Handler = std::function<void(uint8_t, uint16_t, uint8_t*)>;
 
-    opc_server(std::initializer_list<uint16_t> ports);
+    explicit opc_server(std::initializer_list<uint16_t> ports);
+    explicit opc_server(std::vector<uint16_t> ports);
 
     opc_server(opc_server const&) = delete;
     opc_server& operator=(opc_server const&) = delete;
