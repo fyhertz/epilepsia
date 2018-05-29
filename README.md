@@ -7,6 +7,7 @@ Epilepsia is a user friendly cape for the [beaglebone](https://beagleboard.org/b
 ![](http://guigui.us/epilepsia/images/img1.jpg)
 ![](http://guigui.us/epilepsia/images/img2.jpg)
 ![](http://guigui.us/epilepsia/images/img3.jpg)
+![](http://guigui.us/epilepsia/gifs/demo2small.gif)
 
 ## Features
 
