@@ -1,7 +1,14 @@
 {
-    "ports": [7890],
-    "strip_length": 120,
-    "strip_count": 16,
-    "brightness": 0.1,
-    "dithering": false
+    "server": {
+	"ports": [7890]
+    },
+    "strips": {
+	"length": 120,
+	"count": 16
+    },
+    "leds": {
+	"brightness": 0.1,
+	"dithering": false,
+	"zigzag": false
+    }
 }

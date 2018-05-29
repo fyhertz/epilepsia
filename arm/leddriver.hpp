@@ -36,8 +36,13 @@ public:
     void commit_frame_buffer(uint8_t* buffer, int len);
     void clear();
 
-    void set_brightness(const float brightness);
-    void set_dithering(const bool dithering);
+    struct configuration {
+        bool zigzag{ false };
+        bool dithering{ false };
+        float brightness{ 0.1f };
+    };
+
+    void set_config(const configuration& conf);
 
 private:
     void update_lut();
@@ -49,13 +54,11 @@ private:
     void update_buffer(uint8_t* buffer);
 
     const int strip_count_;
-    const int strip_length_;
     const int bytes_per_strip_;
     const int frame_buffer_size_;
 
     int lut_[256];
-    float brightness_{ 0.1f };
-    bool dithering_{ true };
+    configuration conf_{};
     std::vector<int> residual_;
     pru_driver pru_driver_;
 };

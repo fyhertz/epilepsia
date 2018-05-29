@@ -15,16 +15,19 @@
  */
 
 #include "leddriver.hpp"
-#include <iostream>
-#include <array>
 #include <algorithm>
+#include <array>
+#include <iostream>
 
 namespace epilepsia {
 
+/**
+ * strip_length has to be a multiple of 4
+ * strip_count can be 8, 16 or 32
+ */
 led_driver::led_driver(const int strip_length, const int strip_count)
-    : strip_count_(strip_count) // 8, 16 or 32
-    , strip_length_(strip_length) // has to be a multiple of 4
-    , bytes_per_strip_(strip_length_ * 3)
+    : strip_count_(strip_count)
+    , bytes_per_strip_(strip_length * 3)
     , frame_buffer_size_(bytes_per_strip_ * strip_count)
     , pru_driver_(strip_count == 32 ? 2 : 1)
 {
@@ -47,31 +50,22 @@ led_driver::led_driver(const int strip_length, const int strip_count)
     }
 
     pru_driver_.write_config(strip_length, strip_count);
-
     residual_.resize(frame_buffer_size_);
-
-    printf("Strip count: %d\n", strip_count_);
-    printf("Strip length: %d\n", strip_length_);
-    printf("Frame buffer size: %d\n", frame_buffer_size_);
-
     update_lut();
+
+    printf("Strip count: %d\n", strip_count);
+    printf("Strip length: %d\n", strip_length);
+    printf("Frame buffer size: %d\n", frame_buffer_size_);
 }
 
 led_driver::~led_driver()
 {
 }
 
-void led_driver::set_brightness(const float brightness)
+void led_driver::set_config(const configuration& conf)
 {
-    if (brightness_ != brightness) {
-        brightness_ = brightness;
-        update_lut();
-    }
-}
-
-void led_driver::set_dithering(const bool dithering)
-{
-    dithering_ = dithering;
+    conf_ = conf;
+    update_lut();
 }
 
 void led_driver::clear()
@@ -97,24 +91,26 @@ void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
         buffer[i + 1] = p;
     }
 
-    // Every two lines of the display is wired upside-down
-    for (auto i = bytes_per_strip_ / 2; i < frame_buffer_size_; i += bytes_per_strip_) {
-        for (auto j = 0; j < bytes_per_strip_ / 4; j += 3) {
-            uint8_t p = buffer[i + j];
-            buffer[i + j] = buffer[i + bytes_per_strip_ / 2 - 1 - j - 2];
-            buffer[i + bytes_per_strip_ / 2 - 1 - j - 2] = p;
+    if (conf_.zigzag) {
+        // Every two lines of the display is wired upside-down
+        for (auto i = bytes_per_strip_ / 2; i < frame_buffer_size_; i += bytes_per_strip_) {
+            for (auto j = 0; j < bytes_per_strip_ / 4; j += 3) {
+                uint8_t p = buffer[i + j];
+                buffer[i + j] = buffer[i + bytes_per_strip_ / 2 - 1 - j - 2];
+                buffer[i + bytes_per_strip_ / 2 - 1 - j - 2] = p;
 
-            p = buffer[i + j + 1];
-            buffer[i + j + 1] = buffer[i + bytes_per_strip_ / 2 - 1 - j - 1];
-            buffer[i + bytes_per_strip_ / 2 - 1 - j - 1] = p;
+                p = buffer[i + j + 1];
+                buffer[i + j + 1] = buffer[i + bytes_per_strip_ / 2 - 1 - j - 1];
+                buffer[i + bytes_per_strip_ / 2 - 1 - j - 1] = p;
 
-            p = buffer[i + j + 2];
-            buffer[i + j + 2] = buffer[i + bytes_per_strip_ / 2 - 1 - j];
-            buffer[i + bytes_per_strip_ / 2 - 1 - j] = p;
+                p = buffer[i + j + 2];
+                buffer[i + j + 2] = buffer[i + bytes_per_strip_ / 2 - 1 - j];
+                buffer[i + bytes_per_strip_ / 2 - 1 - j] = p;
+            }
         }
     }
 
-    if (dithering_) {
+    if (conf_.dithering) {
         update_buffer<true>(buffer);
     } else {
         update_buffer<false>(buffer);
@@ -205,7 +201,7 @@ void led_driver::update_lut()
 
     for (auto i = 0; i < 256; i++) {
         // lut_[i] between 0 and 0xFFFF
-        lut_[i] = gamma8[i] * 257 * brightness_;
+        lut_[i] = gamma8[i] * 257 * (conf_.brightness > 1.f ? 1.f : conf_.brightness);
     }
 }
 }

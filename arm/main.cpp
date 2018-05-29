@@ -29,27 +29,39 @@ struct config {
     std::vector<uint16_t> ports;
     int strip_length;
     int strip_count;
-    float brightness;
-    bool dithering;
+    epilepsia::led_driver::configuration led_conf;
 };
 
 void from_json(const nlohmann::json& j, config& conf)
 {
-    conf.ports = j.at("ports").get<std::vector<uint16_t>>();
-    conf.strip_length = j.at("strip_length").get<int>();
-    conf.strip_count = j.at("strip_count").get<int>();
-    conf.brightness = j.at("brightness").get<float>();
-    conf.dithering = j.at("dithering").get<bool>();
-};
+    const nlohmann::json& j1 = j.at("server");
+    const nlohmann::json& j2 = j.at("strips");
+    const nlohmann::json& j3 = j.at("leds");
+
+    conf = {
+        j1.at("ports").get<std::vector<uint16_t>>(),
+        j2.at("length").get<int>(),
+        j2.at("count").get<int>(), {
+            j3.at("zigzag").get<bool>(),
+            j3.at("dithering").get<bool>(),
+            j3.at("brightness").get<float>()
+        }
+    };
+}
 
 void to_json(nlohmann::json& j, const config& conf)
 {
     j = nlohmann::json{
-        { "ports", conf.ports },
-        { "strip_length", conf.strip_length },
-        { "strip_count", conf.strip_count },
-        { "brightness", conf.brightness },
-        { "dithering", conf.dithering }
+        { "server", {
+            "ports", conf.ports } },
+        { "strips", {
+            { "length", conf.strip_length },
+            { "count", conf.strip_count }
+            } },
+        { "leds", {
+            { "zigzag", conf.led_conf.zigzag },
+            { "dithering", conf.led_conf.dithering },
+            { "brightness", conf.led_conf.brightness } } }
     };
 }
 
@@ -101,8 +113,7 @@ int main(int argc, char* argv[])
     epilepsia::opc_server server(conf.ports);
     epilepsia::led_driver display(conf.strip_length, conf.strip_count);
 
-    display.set_brightness(conf.brightness);
-    display.set_dithering(conf.dithering);
+    display.set_config(conf.led_conf);
 
     signal(SIGINT, [](int signum) {
         done = 1;
@@ -119,17 +130,16 @@ int main(int argc, char* argv[])
 
             // Change brightness
             case 0x00:
-                conf.brightness = data[1] / 255.0f;
-                display.set_brightness(conf.brightness);
+                conf.led_conf.brightness = data[1] / 255.0f;
                 break;
 
             // Enable/disable dithering
             case 0x01:
-                conf.dithering = data[1];
-                display.set_dithering(conf.dithering);
+                conf.led_conf.dithering = data[1];
                 break;
             }
 
+            display.set_config(conf.led_conf);
             write_conf(config_file, conf);
         }
     });
