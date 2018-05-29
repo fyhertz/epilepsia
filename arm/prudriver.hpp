@@ -33,7 +33,7 @@ public:
     pru_driver& operator=(pru_driver const&) = delete;
     pru_driver& operator=(pru_driver&&) = delete;
 
-    pru_driver(const int pru_count);
+    explicit pru_driver(const int pru_count);
     ~pru_driver();
 
     /**

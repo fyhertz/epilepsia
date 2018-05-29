@@ -1,0 +1,7 @@
+{
+    "ports": [7890],
+    "strip_length": 120,
+    "strip_count": 16,
+    "brightness": 0.1,
+    "dithering": false
+}

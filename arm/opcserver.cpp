@@ -36,7 +36,7 @@ opc_server::opc_server(std::initializer_list<uint16_t> ports)
 {
 }
 
-opc_server::opc_server(std::vector<uint16_t> ports)
+opc_server::opc_server(const std::vector<uint16_t>& ports)
     : ports_(ports)
 {
 }
@@ -78,16 +78,25 @@ bool opc_server::listen()
 
         if (bind(sock, (sockaddr*)&address, sizeof(address)) != 0) {
             fprintf(stderr, "Could not bind to port %d: ", port);
+            break;
         } else if (::listen(sock, 0) != 0) {
             fprintf(stderr, "Could not listen on port %d: ", port);
+            break;
         } else {
             printf("Listening on port %d\n", port);
             listen_socks_.push_back(sock);
         }
     }
 
-    if (listen_socks_.empty())
+    // Could not listen on all provided ports, so we close all opened sockets
+    if (listen_socks_.size() != ports_.size()) {
+        for (auto& sock : listen_socks_) {
+            ::close(sock);
+        }
+        listen_socks_.resize(0);
         return false;
+    }
+    
     return true;
 }
 
