@@ -4,8 +4,9 @@
 
 Epilepsia is a user friendly cape for the [beaglebone](https://beagleboard.org/black) capable of driving up to 32 strips of [neopixels](https://learn.adafruit.com/adafruit-neopixel-uberguide) (actually, WS2812B LEDs) in parallel.
 
-![](http://guigui.us/epilepsia/gifs/demo2.gif)
-![](http://guigui.us/epilepsia/gifs/demo1.gif)
+![](http://guigui.us/epilepsia/images/img1.jpg)
+![](http://guigui.us/epilepsia/images/img2.jpg)
+![](http://guigui.us/epilepsia/images/img3.jpg)
 
 ## Features
 
