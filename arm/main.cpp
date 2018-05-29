@@ -22,10 +22,6 @@
 #include <iostream>
 #include <json.hpp>
 #include <signal.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 volatile sig_atomic_t done = 0;
 
@@ -143,7 +139,7 @@ int main(int argc, char* argv[])
     }
 
     while (!done) {
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     server.stop();
