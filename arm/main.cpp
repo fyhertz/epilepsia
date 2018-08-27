@@ -22,6 +22,7 @@
 #include <iostream>
 #include <json.hpp>
 #include <signal.h>
+#include <iomanip>
 
 volatile sig_atomic_t done = 0;
 
@@ -53,7 +54,8 @@ void to_json(nlohmann::json& j, const config& conf)
 {
     j = nlohmann::json{
         { "server", {
-            "ports", conf.ports } },
+            {"ports", conf.ports } 
+            } },
         { "strips", {
             { "length", conf.strip_length },
             { "count", conf.strip_count }
