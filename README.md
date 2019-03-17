@@ -30,7 +30,7 @@ The following schematic shows the wiring the CD54HC4094s and the PRUs:
 ```
 git clone https://github.com/fyhertz/epilepsia.git
 cd epilepsia
-docker build -t fyhertz/epilepsia -f docker/Dockerfile .
+docker build -t fyhertz/epilepsia -f docker/Dockerfile docker
 docker run -ti -v `pwd -P`:/data fyhertz/epilepsia
 ```
 
