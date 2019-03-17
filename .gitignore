@@ -51,3 +51,9 @@ _autosave-*
 # Exported BOM files
 *.xml
 *.csv
+
+*.deb
+debian/*.debhelper*
+debian/epilepsia.substvars
+debian/files
+
