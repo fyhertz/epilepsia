@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Simon Guigui
+ * Copyright (C) 2018-2019 Simon Guigui
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,10 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
-#include <json.hpp>
 #include <signal.h>
 #include <iomanip>
+#include <json.hpp>
+#include <clara.hpp>
 
 volatile sig_atomic_t done = 0;
 
@@ -109,7 +110,24 @@ void estimate_frame_rate()
 
 int main(int argc, char* argv[])
 {
+    bool help = false;
     std::string config_file = "epilepsia.json";
+
+    auto cli = clara::Help(help)
+        | clara::Opt( config_file, "filename" )
+            ["-c"]["--conf"]("Path to configuration file");
+
+    auto parser = cli.parse( clara::Args( argc, argv ) );
+    if(!parser) {
+        std::cerr << "Error in command line: " << parser.errorMessage() << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    if (help) {
+        std::cout << cli << std::endl;
+        exit(EXIT_SUCCESS);
+    }
+
     config conf = read_conf(config_file);
 
     epilepsia::opc_server server(conf.ports);

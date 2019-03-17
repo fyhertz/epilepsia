@@ -1,0 +1,14 @@
+Source: epilepsia
+Maintainer: Simon Guigui <fyhertz@gmail.com>
+Section: misc
+Priority: optional
+Build-Depends: dh-systemd (>= 1.5), debhelper (>= 9), make, g++-arm-linux-gnueabihf
+
+Package: epilepsia
+Description: Modern Neopixel (WS2812) driver for the Beaglebone.
+ Can drive 64x32 WS2812B LEDs at around 450-500 fps
+ Support the Open Pixel Control protocol and websockets 
+ for feeding frame buffers.
+Homepage: https://github.com/fyhertz/epilepsia
+Depends: ${misc:Depends}, ${shlibs:Depends}, bb-cape-overlays
+Architecture: armhf

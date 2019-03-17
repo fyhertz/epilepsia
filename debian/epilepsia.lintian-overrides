@@ -1,0 +1,7 @@
+epilepsia: binary-from-other-architecture lib/firmware/am335x-pru0-fw
+epilepsia: unstripped-binary-or-object lib/firmware/am335x-pru0-fw
+epilepsia: statically-linked-binary lib/firmware/am335x-pru0-fw
+epilepsia: binary-from-other-architecture lib/firmware/am335x-pru1-fw
+epilepsia: unstripped-binary-or-object lib/firmware/am335x-pru1-fw
+epilepsia: statically-linked-binary lib/firmware/am335x-pru1-fw
+

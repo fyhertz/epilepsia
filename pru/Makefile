@@ -29,8 +29,8 @@ LFLAGS=--reread_libs --warn_sections --stack_size=$(STACK_SIZE) --heap_size=$(HE
 
 GEN_DIR=gen
 
-PRU1_FW		=$(GEN_DIR)/am335x-pru1-fw
-PRU0_FW		=$(GEN_DIR)/am335x-pru0-fw
+PRU1_FW		=$(GEN_DIR)/am335x-epilepsia-pru1-fw
+PRU0_FW		=$(GEN_DIR)/am335x-epilepsia-pru0-fw
 
 
 # -----------------------------------------------------

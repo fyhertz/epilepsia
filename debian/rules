@@ -1,0 +1,6 @@
+#!/usr/bin/make -f
+
+DEB_BUILD_OPTS+=nocheck
+
+%:
+	dh $@ --with systemd

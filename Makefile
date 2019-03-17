@@ -2,11 +2,11 @@
 PRU_CGT = /opt/ti/ti-cgt-pru_2.2.1
 
 # Remote execution requires ssh access as root
-SSH_HOST = beagle_root
+SSH_HOST ?= beagle_root
 
 BIN_ARM = arm/epilepsia
-BIN_PRU_0 = pru/gen/am335x-pru0-fw
-BIN_PRU_1 = pru/gen/am335x-pru1-fw
+BIN_PRU_0 = pru/gen/am335x-epilepsia-pru0-fw
+BIN_PRU_1 = pru/gen/am335x-epilepsia-pru1-fw
 
 PINS = P8_46 P8_43 P8_42 P8_28 # PRU 1
 PINS += P9_25 P9_27 P9_31 P8_11 # PRU 0
@@ -59,7 +59,7 @@ run: upload reset just_run
 # Set the pins we use to pruout
 config:	
 	ssh $(SSH_HOST) 'su -c "$(foreach pin,$(PINS),config-pin -a $(pin) pruout;)' \
-	'cd $(SYSFS); echo am335x-pru0-fw > remoteproc1/firmware;echo am335x-pru1-fw > remoteproc2/firmware" || true'
+	'cd $(SYSFS); echo am335x-epilepsia-pru0-fw > remoteproc1/firmware;echo am335x-epilepsia-pru1-fw > remoteproc2/firmware" || true'
 	
 
 

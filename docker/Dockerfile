@@ -1,10 +1,19 @@
 FROM debian:buster-slim
 LABEL maintainer="fyhertz@gmail.com"
 
-# Install dependencies
+# Install package build dependencies
 # clpru installer is a 32 bits executable: lib32z1 needed
-RUN apt-get -yq update \
- && apt-get -yq --no-install-suggests --no-install-recommends install ca-certificates wget lib32z1 make g++-arm-linux-gnueabihf \
+RUN dpkg --add-architecture armhf \
+ && apt-get -yq update \
+ && apt-get -yq --no-install-suggests --no-install-recommends install \
+    dh-systemd \
+    build-essential \
+    devscripts \
+    debhelper \
+    wget lib32z1 \
+    make \
+    g++-arm-linux-gnueabihf \
+    libc6:armhf \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
@@ -14,5 +23,7 @@ RUN wget http://software-dl.ti.com/codegen/esd/cgt_public_sw/PRU/2.2.1/ti_cgt_pr
  && ./clpru.bin --mode unattended --prefix /opt/ti \
  && rm clpru.bin
 
-WORKDIR /opt/epilepsia
-ENTRYPOINT ["make"]
+COPY entry.sh /
+VOLUME /data
+WORKDIR /data
+ENTRYPOINT ["/entry.sh"]

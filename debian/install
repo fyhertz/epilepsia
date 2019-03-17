@@ -1,0 +1,3 @@
+arm/epilepsia usr/bin
+arm/epilepsia.json etc/epilepsia
+pru/gen/am335x-epilepsia* lib/firmware
