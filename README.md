@@ -26,6 +26,16 @@ The following schematic shows the wiring the CD54HC4094s and the PRUs:
 
 ## Build instructions
 
+**You can compile epilepsia and build a debian package with the provided Dockerfile:** 
+```
+git clone https://github.com/fyhertz/epilepsia.git
+cd epilepsia
+docker build -t fyhertz/epilepsia -f docker/Dockerfile .
+docker run -ti -v `pwd -P`:/data fyhertz/epilepsia
+```
+
+The [-v option](https://docs.docker.com/storage/volumes/) is needed to mount the project files in the container. On Windows/Mac OS you might want to replace the `pwd` command with the path to the your clone of the project.
+
 **Cross compiling epilepsia from a linux host:**
 
 1. You will need the clpru C/C++03 compiler from TI to build the PRU firmware:
@@ -44,14 +54,6 @@ sudo apt-get update && apt-get install -y make g++-arm-linux-gnueabihf
 ```
 make
 ```
-
-**You can also compile epilepsia with the provided Dockerfile.** From your clone of the project run:
-```
-docker build -t fyhertz/epilepsia -f docker/build.dockerfile .
-docker run -ti -v `pwd -P`:/data fyhertz/epilepsia
-```
-
-The [-v option](https://docs.docker.com/storage/volumes/) is needed to mount the project files in the container. On Windows/Mac OS you might want to replace the `pwd` command with the path to the your clone of the project.
 
 ## Installation instructions
 
