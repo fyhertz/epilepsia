@@ -15,7 +15,6 @@
  */
 
 #include "prudriver.hpp"
-#include <spdlog/spdlog.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -65,7 +64,7 @@ void pru_driver::block_until_ready()
         nanosleep((const struct timespec[]){ { 0, 15000L } }, NULL);
         if (n++ > 10000) {
             // PRU(s) not running... we discard the frame
-            spdlog::warn("PRU(s) not running");
+            spdlog::error("PRU(s) not running");
             break;
         }
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  * Firmware of the PRUs.
- * Written in C++03 because I'm building it with the clpru compiler.
+ * Written in C++03 for the clpru compiler from TI.
  * 
  */
 

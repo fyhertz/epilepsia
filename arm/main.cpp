@@ -43,16 +43,23 @@ void estimate_frame_rate()
 int main(int argc, char* argv[])
 {
     bool help = false;
+    bool debug = false;
     std::string file = "epilepsia.json";
 
     auto cli = clara::Help(help)
         | clara::Opt(file, "filename")
-              ["-c"]["--conf"]("Path to configuration file");
+              ["-c"]["--conf"]("Path to configuration file")
+        | clara::Opt(debug)
+              ["-d"]["--debug"]("Set global log level to debug");
 
     auto parser = cli.parse(clara::Args(argc, argv));
     if (!parser) {
         spdlog::error("Error in command line: {}", parser.errorMessage());
         exit(EXIT_FAILURE);
+    }
+
+    if (debug) {
+        spdlog::set_level(spdlog::level::debug);
     }
 
     if (help) {
