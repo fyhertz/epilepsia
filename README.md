@@ -18,9 +18,9 @@ Epilepsia is a user friendly cape for the [beaglebone](https://beagleboard.org/b
 
 ## Architecture
 
-The [led_driver](https://github.com/fyhertz/epilepsia/blob/master/arm/leddriver.cpp) class handles the communication with the PRUs. Each PRU can drive 16 WS2812 led strips in parallel using two CD54HC4094 serial to parallel shift register. The bits of the frame buffer are reordered by the beablebone's CPU before being copied to the PRUs shared memory. Each PRU just has to sequentially read that memory to fill its shift registers. The single wire protocol of the led strips is implemented by switching the parallel outputs of the CD54HC4094 IC.
+The [led_driver](https://github.com/fyhertz/epilepsia/blob/master/arm/leddriver.cpp) class handles the communication with the PRUs. Each PRU can drive 16 WS2812 led strips in parallel using two 74HC4094 serial to parallel shift register. The bits of the frame buffer are reordered by the beablebone's CPU before being copied to the PRUs shared memory. Each PRU just has to sequentially read that memory to fill its shift registers. The single wire protocol of the led strips is implemented by switching the parallel outputs of the 74HC4094 IC.
 
-The following schematic shows the wiring the CD54HC4094s and the PRUs:
+The following schematic shows the wiring the 74HC4094s and the PRUs:
 
 ![Schematic](https://raw.githubusercontent.com/fyhertz/epilepsia/master/schematics/schematic.png)
 
