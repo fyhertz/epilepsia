@@ -17,82 +17,13 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "leddriver.hpp"
 #include "opcserver.hpp"
+#include "settings.hpp"
 #include <chrono>
-#include <fstream>
+#include <clara.hpp>
 #include <iostream>
 #include <signal.h>
-#include <iomanip>
-#include <json.hpp>
-#include <clara.hpp>
 
 volatile sig_atomic_t done = 0;
-
-struct config {
-    std::vector<uint16_t> ports;
-    int strip_length;
-    int strip_count;
-    epilepsia::led_driver::configuration led_conf;
-};
-
-void from_json(const nlohmann::json& j, config& conf)
-{
-    const nlohmann::json& j1 = j.at("server");
-    const nlohmann::json& j2 = j.at("strips");
-    const nlohmann::json& j3 = j.at("leds");
-
-    conf = {
-        j1.at("ports").get<std::vector<uint16_t>>(),
-        j2.at("length").get<int>(),
-        j2.at("count").get<int>(), {
-            j3.at("zigzag").get<bool>(),
-            j3.at("dithering").get<bool>(),
-            j3.at("brightness").get<float>()
-        }
-    };
-}
-
-void to_json(nlohmann::json& j, const config& conf)
-{
-    j = nlohmann::json{
-        { "server", {
-            {"ports", conf.ports } 
-            } },
-        { "strips", {
-            { "length", conf.strip_length },
-            { "count", conf.strip_count }
-            } },
-        { "leds", {
-            { "zigzag", conf.led_conf.zigzag },
-            { "dithering", conf.led_conf.dithering },
-            { "brightness", conf.led_conf.brightness } } }
-    };
-}
-
-config read_conf(const std::string& file)
-{
-    std::ifstream i(file);
-
-    if (!i.good()) {
-        std::cerr << "Failed to open \""
-                  << file
-                  << "\"." << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-
-    // Parse json config file
-    nlohmann::json j;
-    i >> j;
-    config conf = j;
-
-    return conf;
-}
-
-void write_conf(const std::string& file, const config& conf)
-{
-    std::ofstream o(file);
-    nlohmann::json j = conf;
-    o << std::setw(4) << j << std::endl;
-}
 
 void estimate_frame_rate()
 {
@@ -111,14 +42,14 @@ void estimate_frame_rate()
 int main(int argc, char* argv[])
 {
     bool help = false;
-    std::string config_file = "epilepsia.json";
+    std::string file = "epilepsia.json";
 
     auto cli = clara::Help(help)
-        | clara::Opt( config_file, "filename" )
-            ["-c"]["--conf"]("Path to configuration file");
+        | clara::Opt(file, "filename")
+              ["-c"]["--conf"]("Path to configuration file");
 
-    auto parser = cli.parse( clara::Args( argc, argv ) );
-    if(!parser) {
+    auto parser = cli.parse(clara::Args(argc, argv));
+    if (!parser) {
         std::cerr << "Error in command line: " << parser.errorMessage() << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -128,12 +59,9 @@ int main(int argc, char* argv[])
         exit(EXIT_SUCCESS);
     }
 
-    config conf = read_conf(config_file);
-
-    epilepsia::opc_server server(conf.ports);
-    epilepsia::led_driver display(conf.strip_length, conf.strip_count);
-
-    display.set_config(conf.led_conf);
+    epilepsia::settings settings(file);
+    epilepsia::opc_server server(settings.server_ports);
+    epilepsia::led_driver display(settings.driver);
 
     signal(SIGINT, [](int signum) {
         done = 1;
@@ -150,17 +78,17 @@ int main(int argc, char* argv[])
 
             // Change brightness
             case 0x00:
-                conf.led_conf.brightness = data[1] / 255.0f;
+                settings.driver.brightness = data[1] / 255.0f;
                 break;
 
             // Enable/disable dithering
             case 0x01:
-                conf.led_conf.dithering = data[1];
+                settings.driver.dithering = data[1];
                 break;
             }
 
-            display.set_config(conf.led_conf);
-            write_conf(config_file, conf);
+            // Save new settings
+            settings.dump_settings();
         }
     });
 

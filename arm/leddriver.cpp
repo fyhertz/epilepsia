@@ -25,47 +25,43 @@ namespace epilepsia {
  * strip_length has to be a multiple of 4
  * strip_count can be 8, 16 or 32
  */
-led_driver::led_driver(const int strip_length, const int strip_count)
-    : strip_count_(strip_count)
-    , bytes_per_strip_(strip_length * 3)
-    , frame_buffer_size_(bytes_per_strip_ * strip_count)
-    , pru_driver_(strip_count == 32 ? 2 : 1)
+led_driver::led_driver(led_driver_settings& settings)
+    : strip_length_(settings.strip_length)
+    , strip_count_(settings.strip_count)
+    , bytes_per_strip_(settings.strip_length * 3)
+    , frame_buffer_size_(bytes_per_strip_ * settings.strip_count)
+    , settings_(settings)
+    , pru_driver_(settings.strip_count == 32 ? 2 : 1)
 {
 
     // remap_bits needs strip_length > 4
-    if (strip_length % 4 != 0) {
+    if (settings.strip_length % 4 != 0) {
         fprintf(stderr, "The length of your strips has to be a multiple of 4\n");
         std::exit(EXIT_FAILURE);
     }
 
-    if (strip_count != 8 && strip_count != 16 && strip_count != 32) {
+    if (settings.strip_count != 8 && settings.strip_count != 16 && settings.strip_count != 32) {
         fprintf(stderr, "Invalid number of strips\n");
         std::exit(EXIT_FAILURE);
     }
 
-    // PRU shared mem = 12kB
+    // PRU shared mem = 12kiB (or is it 12 kB?)
     if (frame_buffer_size_ > 12 * 1024 - 4) {
-        fprintf(stderr, "Not enough memory\n");
+        fprintf(stderr, "Frame buffer too big\n");
         std::exit(EXIT_FAILURE);
     }
 
-    pru_driver_.write_config(strip_length, strip_count);
+    pru_driver_.write_config(settings.strip_length, settings.strip_count);
     residual_.resize(frame_buffer_size_);
     update_lut();
 
-    printf("Strip count: %d\n", strip_count);
-    printf("Strip length: %d\n", strip_length);
+    printf("Strip count: %d\n", settings.strip_count);
+    printf("Strip length: %d\n", settings.strip_length);
     printf("Frame buffer size: %d\n", frame_buffer_size_);
 }
 
 led_driver::~led_driver()
 {
-}
-
-void led_driver::set_config(const configuration& conf)
-{
-    conf_ = conf;
-    update_lut();
 }
 
 void led_driver::clear()
@@ -91,7 +87,7 @@ void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
         buffer[i + 1] = p;
     }
 
-    if (conf_.zigzag) {
+    if (settings_.zigzag) {
         // Every two lines of the display is wired upside-down
         for (auto i = bytes_per_strip_ / 2; i < frame_buffer_size_; i += bytes_per_strip_) {
             for (auto j = 0; j < bytes_per_strip_ / 4; j += 3) {
@@ -110,7 +106,7 @@ void led_driver::commit_frame_buffer(uint8_t* buffer, int len)
         }
     }
 
-    if (conf_.dithering) {
+    if (settings_.dithering) {
         update_buffer<true>(buffer);
     } else {
         update_buffer<false>(buffer);
@@ -201,7 +197,7 @@ void led_driver::update_lut()
 
     for (auto i = 0; i < 256; i++) {
         // lut_[i] between 0 and 0xFFFF
-        lut_[i] = gamma8[i] * 257 * (conf_.brightness > 1.f ? 1.f : conf_.brightness);
+        lut_[i] = gamma8[i] * 257 * (settings_.brightness > 1.f ? 1.f : settings_.brightness);
     }
 }
 }

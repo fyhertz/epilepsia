@@ -62,7 +62,7 @@ void pru_driver::block_until_ready()
     int n = 0;
     // Wait for PRU(s) to be ready for the next frame
     while (!ready()) {
-        nanosleep((const struct timespec[]){{0, 15000L}}, NULL);
+        nanosleep((const struct timespec[]){ { 0, 15000L } }, NULL);
         if (n++ > 10000) {
             // PRU(s) not running... we discard the frame
             break;
@@ -75,7 +75,7 @@ void pru_driver::halt()
 {
     printf("Waiting for PRUs... ");
     // We wait 200 ms, enough to be sure that PRU 0 or (PRU 0 and PRU 1) is/are waiting.
-    nanosleep((const struct timespec[]){{0, 200000000L}}, NULL);
+    nanosleep((const struct timespec[]){ { 0, 200000000L } }, NULL);
     shared_memory_[3] = 0xFF;
     if (!ready()) {
         printf("PRU(s) not running\n");

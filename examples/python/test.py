@@ -12,11 +12,11 @@ import numpy as np
 
 @click.command()
 @click.option('-f', '--framerate', default=120.0, help='Frames per second')
-@click.option('-i', '--ip', default='127.0.0.1', help='OPC server IP address')
+@click.option('-h', '--host', default='127.0.0.1', help='OPC server')
 @click.option('-p', '--port', default=7890, help='OPC server port')
-def main(framerate, ip, port):
+def main(framerate, host, port):
 
-    client = opc.Client(ip + ':' + str(port))
+    client = opc.Client(host + ':' + str(port))
     x_dim = 60
     y_dim = 32
     k = 0

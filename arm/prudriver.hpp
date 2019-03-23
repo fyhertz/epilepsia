@@ -48,6 +48,11 @@ public:
     template <typename T>
     void write_frame(T buffer, const int len)
     {
+        if (len > 12 * 1024 - 4) {
+            // Warning buffer too big. Should not happen...
+            // Frame discarded
+            return;
+        }
         block_until_ready();
         std::copy_n(buffer, len, reinterpret_cast<T>(frame_)); // 280us for 5760 bytes
     }

@@ -23,6 +23,15 @@
 
 namespace epilepsia {
 
+
+struct led_driver_settings {
+    int strip_length{64};
+    int strip_count{32};
+    bool zigzag{ false };
+    bool dithering{ false };
+    float brightness{ 0.1f };
+};
+
 class led_driver {
 public:
     led_driver(led_driver const&) = delete;
@@ -30,19 +39,11 @@ public:
     led_driver& operator=(led_driver const&) = delete;
     led_driver& operator=(led_driver&&) = delete;
 
-    led_driver(const int strip_length, const int strip_count);
+    led_driver(led_driver_settings& settings);
     ~led_driver();
 
     void commit_frame_buffer(uint8_t* buffer, int len);
     void clear();
-
-    struct configuration {
-        bool zigzag{ false };
-        bool dithering{ false };
-        float brightness{ 0.1f };
-    };
-
-    void set_config(const configuration& conf);
 
 private:
     void update_lut();
@@ -53,12 +54,13 @@ private:
     template <bool dithering>
     void update_buffer(uint8_t* buffer);
 
+    const int strip_length_;
     const int strip_count_;
     const int bytes_per_strip_;
     const int frame_buffer_size_;
 
     int lut_[256];
-    configuration conf_{};
+    led_driver_settings& settings_;
     std::vector<int> residual_;
     pru_driver pru_driver_;
 };
