@@ -15,8 +15,8 @@
  */
 
 #include "prudriver.hpp"
+#include <spdlog/spdlog.h>
 #include <fcntl.h>
-#include <iostream>
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -29,14 +29,14 @@ pru_driver::pru_driver(const int pru_count)
 
     mem_fd_ = open("/dev/mem", O_RDWR | O_SYNC);
     if (mem_fd_ < 0) {
-        fprintf(stderr, "Failed to open /dev/mem (%s)\n", strerror(errno));
+        spdlog::error("Failed to open /dev/mem {}", strerror(errno));
         std::exit(EXIT_FAILURE);
     }
 
     // Address of the PRUs shared memory on a am335 soc
     shared_memory_ = static_cast<uint8_t*>(mmap(0, 0x00003000, PROT_WRITE | PROT_READ, MAP_SHARED, mem_fd_, 0x4A300000 + 0x00010000));
     if (shared_memory_ == NULL) {
-        fprintf(stderr, "Failed to map the device (%s)\n", strerror(errno));
+        spdlog::error("Failed to map the device {}", strerror(errno));
         close(mem_fd_);
         std::exit(EXIT_FAILURE);
     }
@@ -65,6 +65,7 @@ void pru_driver::block_until_ready()
         nanosleep((const struct timespec[]){ { 0, 15000L } }, NULL);
         if (n++ > 10000) {
             // PRU(s) not running... we discard the frame
+            spdlog::warn("PRU(s) not running");
             break;
         }
     }
@@ -73,14 +74,14 @@ void pru_driver::block_until_ready()
 
 void pru_driver::halt()
 {
-    printf("Waiting for PRUs... ");
+    spdlog::info("Waiting for PRUs...");
     // We wait 200 ms, enough to be sure that PRU 0 or (PRU 0 and PRU 1) is/are waiting.
     nanosleep((const struct timespec[]){ { 0, 200000000L } }, NULL);
     shared_memory_[3] = 0xFF;
     if (!ready()) {
-        printf("PRU(s) not running\n");
+        spdlog::warn("PRU(s) not running");
     } else {
-        printf("OK\n");
+        spdlog::info("OK");
     }
     *flag_pru_ = 0;
 }

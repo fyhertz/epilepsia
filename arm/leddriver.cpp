@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Simon Guigui
+ * Copyright (C) 2018-2019 Simon Guigui
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 
 #include "leddriver.hpp"
+#include <spdlog/spdlog.h>
 #include <algorithm>
 #include <array>
-#include <iostream>
 
 namespace epilepsia {
 
@@ -35,29 +35,30 @@ led_driver::led_driver(led_driver_settings& settings)
 {
 
     // remap_bits needs strip_length > 4
-    if (settings.strip_length % 4 != 0) {
-        fprintf(stderr, "The length of your strips has to be a multiple of 4\n");
+    if (strip_length_ % 4 != 0) {
+        spdlog::error("The length of your strips has to be a multiple of 4");
         std::exit(EXIT_FAILURE);
     }
 
-    if (settings.strip_count != 8 && settings.strip_count != 16 && settings.strip_count != 32) {
-        fprintf(stderr, "Invalid number of strips\n");
+    if (strip_count_ != 8 && strip_count_ != 16 && strip_count_ != 32) {
+        spdlog::error("Invalid number of strips: {}", strip_count_);
         std::exit(EXIT_FAILURE);
     }
 
     // PRU shared mem = 12kiB (or is it 12 kB?)
-    if (frame_buffer_size_ > 12 * 1024 - 4) {
-        fprintf(stderr, "Frame buffer too big\n");
+    const int max = 12 * 1024 - 4;
+    if (frame_buffer_size_ > max) {
+        spdlog::error("Frame buffer too big: {} > {}", frame_buffer_size_, max);
         std::exit(EXIT_FAILURE);
     }
 
-    pru_driver_.write_config(settings.strip_length, settings.strip_count);
+    pru_driver_.write_config(strip_length_, strip_count_);
     residual_.resize(frame_buffer_size_);
     update_lut();
 
-    printf("Strip count: %d\n", settings.strip_count);
-    printf("Strip length: %d\n", settings.strip_length);
-    printf("Frame buffer size: %d\n", frame_buffer_size_);
+    spdlog::info("Strip count: {}", strip_count_);
+    spdlog::info("Strip length: {}", strip_length_);
+    spdlog::info("Frame buffer size: {}", frame_buffer_size_);
 }
 
 led_driver::~led_driver()

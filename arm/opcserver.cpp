@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Simon Guigui
+ * Copyright (C) 2018-2019 Simon Guigui
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "opcserver.hpp"
+#include <spdlog/spdlog.h>
 #include <sha1.hpp>
 #include <algorithm>
 #include <arpa/inet.h>
@@ -77,13 +78,13 @@ bool opc_server::listen()
         address.sin_addr.s_addr = htonl(INADDR_ANY);
 
         if (bind(sock, (sockaddr*)&address, sizeof(address)) != 0) {
-            fprintf(stderr, "Could not bind to port %d: ", port);
+            spdlog::error("Could not bind to port {}", port);
             break;
         } else if (::listen(sock, 0) != 0) {
-            fprintf(stderr, "Could not listen on port %d: ", port);
+            spdlog::error("Could not listen on port {}", port);
             break;
         } else {
-            printf("Listening on port %d\n", port);
+            spdlog::info("Listening on port {}", port);
             listen_socks_.push_back(sock);
         }
     }
@@ -127,7 +128,7 @@ void opc_server::run()
                 int sock = accept(i, (struct sockaddr*)&clientname, &address_len);
                 if (sock >= 0) {
                     inet_ntop(AF_INET, &(clientname.sin_addr), buffer, 64);
-                    fprintf(stderr, "Client connected from %s\n", buffer);
+                    spdlog::info("New connection from {}", buffer);
                     FD_SET(sock, &active_fd_set);
                     clients_.emplace(sock, Client(sock, *this));
                 }
@@ -142,7 +143,7 @@ void opc_server::run()
                 if (!clients_.at(i).read()) {
                     ::close(i);
                     FD_CLR(i, &active_fd_set);
-                    fprintf(stderr, "Client disconnected\n");
+                    spdlog::info("Client disconnected");
                     clients_.erase(i);
                 }
             }
@@ -181,11 +182,11 @@ bool opc_server::Client::read()
     if (received == 4) {
         const std::array<uint8_t, 4> a = { 'G', 'E', 'T', ' ' };
         if (std::equal(std::begin(a), std::end(a), std::begin(buffer))) {
-            fprintf(stderr, "Websocket connection\n");
+            spdlog::info("Protocol: Websocket");
             state = client_state::websocket_handshake;
             return handle_websocket_handshake();
         } else {
-            fprintf(stderr, "OPC connection\n");
+            spdlog::info("Protocol: OPC");
             state = client_state::opc;
             return handle_opc();
         }

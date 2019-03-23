@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Simon Guigui
+ * Copyright (C) 2018-2019 Simon Guigui
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #ifndef EPILEPSIAPRUDRIVER_H
 #define EPILEPSIAPRUDRIVER_H
 
+#include <spdlog/spdlog.h>
 #include <cstdint>
 #include <algorithm>
 
@@ -51,6 +52,7 @@ public:
         if (len > 12 * 1024 - 4) {
             // Warning buffer too big. Should not happen...
             // Frame discarded
+            spdlog::warn("Frame too big, discarding it...");
             return;
         }
         block_until_ready();

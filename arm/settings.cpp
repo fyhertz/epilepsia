@@ -15,9 +15,9 @@
  */
 
 #include "settings.hpp"
+#include <spdlog/spdlog.h>
 #include <fstream>
 #include <iomanip>
-#include <iostream>
 #include <json.hpp>
 
 namespace epilepsia {
@@ -50,9 +50,7 @@ void settings::load_settings()
     std::ifstream i(file_);
 
     if (!i.good()) {
-        std::cerr << "Failed to open \""
-                  << file_
-                  << "\"." << std::endl;
+        spdlog::error("Failed to open \"{}\".", file_);
         std::exit(EXIT_FAILURE);
     }
 

@@ -18,6 +18,7 @@
 #include "leddriver.hpp"
 #include "opcserver.hpp"
 #include "settings.hpp"
+#include <spdlog/spdlog.h>
 #include <chrono>
 #include <clara.hpp>
 #include <iostream>
@@ -32,7 +33,7 @@ void estimate_frame_rate()
     auto elapsed = std::chrono::steady_clock::now() - start;
 
     if (std::chrono::duration<double, std::milli>(elapsed).count() > 1000) {
-        std::cout << "Frame rate: " << counter << std::endl;
+        spdlog::debug("Frame rate: {}", counter);
         start = std::chrono::steady_clock::now();
         counter = 0;
     }
@@ -50,7 +51,7 @@ int main(int argc, char* argv[])
 
     auto parser = cli.parse(clara::Args(argc, argv));
     if (!parser) {
-        std::cerr << "Error in command line: " << parser.errorMessage() << std::endl;
+        spdlog::error("Error in command line: {}", parser.errorMessage());
         exit(EXIT_FAILURE);
     }
 
