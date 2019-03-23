@@ -25,7 +25,7 @@ namespace epilepsia {
 
 class settings {
 public:
-    settings(std::string file = "/etc/epilepsia/epilepsia.json");
+    explicit settings(const std::string& file = "/etc/epilepsia/epilepsia.json");
 
     void load_settings();
     void dump_settings();

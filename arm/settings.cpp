@@ -39,7 +39,7 @@ void to_json(nlohmann::json& j, const epilepsia::settings& conf)
     };
 }
 
-settings::settings(std::string file)
+settings::settings(const std::string& file)
     : file_(file)
 {
     load_settings();

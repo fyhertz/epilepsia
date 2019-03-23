@@ -90,7 +90,6 @@ void pru_driver::block_until_ready()
             // PRU(s) not running...
             spdlog::critical("PRU(s) not running");
             std::exit(EXIT_FAILURE);
-            break;
         }
     }
     *flag_pru_ = 0;
