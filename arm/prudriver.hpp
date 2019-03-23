@@ -34,13 +34,8 @@ public:
     pru_driver& operator=(pru_driver const&) = delete;
     pru_driver& operator=(pru_driver&&) = delete;
 
-    explicit pru_driver(const int pru_count);
+    explicit pru_driver(const int pru_count, const int strip_length, const int strip_count);
     ~pru_driver();
-
-    /**
-     * Tell the PRUs how to parse the incomming frames.
-     */
-    void write_config(const int strip_length, const int strip_count);
 
     /**
      * Block until the PRU(s) is/are ready to read a new frame,
@@ -60,6 +55,7 @@ public:
     }
 
 private:
+    void write_rproc_sysfs(int pru_id, const char* filenae, const char* value);
     void block_until_ready();
     void halt();
     bool ready() const;
