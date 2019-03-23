@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Simon Guigui
+ * Copyright (C) 2018-2019 Simon Guigui
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,12 +46,12 @@ pru_driver::pru_driver(const int pru_count, const int strip_length, const int st
     shared_memory_[3] = strip_count;
 
     // Load firmware and start PRU 0
-    write_rproc_sysfs(0, "firmware","am335x-epilepsia-pru0-fw");
-    write_rproc_sysfs(0, "state","start");
+    write_rproc_sysfs(0, "firmware", "am335x-epilepsia-pru0-fw");
+    write_rproc_sysfs(0, "state", "start");
 
     // Load firmware and start PRU 1
-    write_rproc_sysfs(1, "firmware","am335x-epilepsia-pru1-fw");
-    write_rproc_sysfs(1, "state","start");
+    write_rproc_sysfs(1, "firmware", "am335x-epilepsia-pru1-fw");
+    write_rproc_sysfs(1, "state", "start");
 
     flag_pru_ = reinterpret_cast<uint16_t*>(shared_memory_);
     frame_ = reinterpret_cast<uint32_t*>(&shared_memory_[4]);
@@ -61,14 +61,14 @@ pru_driver::~pru_driver()
 {
     halt();
     close(mem_fd_);
-    write_rproc_sysfs(0, "state","stop");
-    write_rproc_sysfs(1, "state","stop");
+    write_rproc_sysfs(0, "state", "stop");
+    write_rproc_sysfs(1, "state", "stop");
 }
 
 void pru_driver::write_rproc_sysfs(int pru_id, const char* filename, const char* value)
 {
     using namespace std::string_literals;
-    auto path = "/sys/class/remoteproc/remoteproc"s + std::to_string(pru_id+1) + "/" + filename;
+    auto path = "/sys/class/remoteproc/remoteproc"s + std::to_string(pru_id + 1) + "/" + filename;
     std::ofstream f;
     f.open(path);
     if (!f.fail()) {
