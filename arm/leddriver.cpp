@@ -31,7 +31,7 @@ led_driver::led_driver(led_driver_settings& settings)
     , bytes_per_strip_(settings.strip_length * 3)
     , frame_buffer_size_(bytes_per_strip_ * settings.strip_count)
     , settings_(settings)
-    , pru_driver_(settings.strip_count == 32 ? 2 : 1, strip_length_, strip_count_)
+    , pru_driver_(strip_length_, strip_count_)
 {
 
     // remap_bits needs strip_length > 4

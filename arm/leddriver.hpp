@@ -39,7 +39,7 @@ public:
     led_driver& operator=(led_driver const&) = delete;
     led_driver& operator=(led_driver&&) = delete;
 
-    led_driver(led_driver_settings& settings);
+    explicit led_driver(led_driver_settings& settings);
     ~led_driver();
 
     void commit_frame_buffer(uint8_t* buffer, int len);

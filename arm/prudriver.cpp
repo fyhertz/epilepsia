@@ -24,8 +24,8 @@
 
 namespace epilepsia {
 
-pru_driver::pru_driver(const int pru_count, const int strip_length, const int strip_count)
-    : pru_count_(pru_count)
+pru_driver::pru_driver(const int strip_length, const int strip_count)
+    : pru_count_(strip_count == 32 ? 2 : 1)
 {
     mem_fd_ = open("/dev/mem", O_RDWR | O_SYNC);
     if (mem_fd_ < 0) {
@@ -50,8 +50,10 @@ pru_driver::pru_driver(const int pru_count, const int strip_length, const int st
     write_rproc_sysfs(0, "state", "start");
 
     // Load firmware and start PRU 1
-    write_rproc_sysfs(1, "firmware", "am335x-epilepsia-pru1-fw");
-    write_rproc_sysfs(1, "state", "start");
+    if (pru_count_ == 2) {
+        write_rproc_sysfs(1, "firmware", "am335x-epilepsia-pru1-fw");
+        write_rproc_sysfs(1, "state", "start");
+    }
 
     flag_pru_ = reinterpret_cast<uint16_t*>(shared_memory_);
     frame_ = reinterpret_cast<uint32_t*>(&shared_memory_[4]);
@@ -62,7 +64,8 @@ pru_driver::~pru_driver()
     halt();
     close(mem_fd_);
     write_rproc_sysfs(0, "state", "stop");
-    write_rproc_sysfs(1, "state", "stop");
+    if (pru_count_ == 2)
+        write_rproc_sysfs(1, "state", "stop");
 }
 
 void pru_driver::write_rproc_sysfs(int pru_id, const char* filename, const char* value)
