@@ -64,6 +64,11 @@ led_driver::~led_driver()
 {
 }
 
+void led_driver::set_brightness(float brightness) {
+    settings_.brightness = brightness;
+    update_lut();
+}
+
 void led_driver::clear()
 {
     uint8_t buf[frame_buffer_size_];

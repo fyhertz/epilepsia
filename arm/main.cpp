@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 
             // Change brightness
             case 0x00:
-                settings.driver.brightness = data[1] / 255.0f;
+                display.set_brightness(data[1] / 255.0f);
                 break;
 
             // Enable/disable dithering

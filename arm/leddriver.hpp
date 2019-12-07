@@ -43,6 +43,7 @@ public:
     ~led_driver();
 
     void commit_frame_buffer(uint8_t* buffer, int len);
+    void set_brightness(float brightness);
     void clear();
 
 private:

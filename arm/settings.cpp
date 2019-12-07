@@ -22,23 +22,6 @@
 
 namespace epilepsia {
 
-void to_json(nlohmann::json& j, const epilepsia::settings& conf)
-{
-    j = nlohmann::json{
-        { "server", {
-            {"ports", conf.server_ports } 
-            } },
-        { "strips", {
-            { "length", conf.driver.strip_length },
-            { "count", conf.driver.strip_count }
-            } },
-        { "leds", {
-            { "zigzag", conf.driver.zigzag },
-            { "dithering", conf.driver.dithering },
-            { "brightness", conf.driver.brightness } } }
-    };
-}
-
 settings::settings(const std::string& file)
     : file_(file)
 {
@@ -76,7 +59,19 @@ void settings::load_settings()
 void settings::dump_settings()
 {
     std::ofstream o(file_);
-    nlohmann::json j = *this;
+    auto j = nlohmann::json{
+        { "server", {
+            {"ports", server_ports } 
+            } },
+        { "strips", {
+            { "length", driver.strip_length },
+            { "count", driver.strip_count }
+            } },
+        { "leds", {
+            { "zigzag", driver.zigzag },
+            { "dithering", driver.dithering },
+            { "brightness", driver.brightness } } }
+    };
     o << std::setw(4) << j << std::endl;
 }
 

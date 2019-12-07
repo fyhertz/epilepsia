@@ -1,3 +1,9 @@
+epilepsia (0.2) unstable; urgency=medium
+
+  * bug fix when saving settings
+
+ -- Simon <fyhertz@gmail.com>  Sat, 07 Dec 2019 17:07:25 +0100
+
 epilepsia (0.1) unstable; urgency=medium
 
   * Initial release.
