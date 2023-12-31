@@ -5,6 +5,7 @@ After=network.target
 [Service]
 ExecStartPre=/bin/bash -c 'pins="P8_46 P8_43 P8_42 P8_28 P9_25 P9_27 P9_31 P8_11"; for i in $pins; do /usr/bin/config-pin -a $i pruout; done'
 ExecStart=/usr/bin/epilepsia -c /etc/epilepsia/epilepsia.json
+ExecStopPost=+/bin/sh -c '/sbin/shutdown -h now'
 Restart=on-failure
 RestartSec=5s
 

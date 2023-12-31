@@ -98,6 +98,11 @@ int main(int argc, char* argv[])
             // Save new settings
             settings.dump_settings();
         }
+
+         // Exit epilepsia
+	if (length == 1 && data[0] == 0x02) {
+	    done = 1;
+	}
     });
 
     if (!server.start()) {

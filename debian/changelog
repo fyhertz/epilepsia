@@ -1,3 +1,10 @@
+epilepsia (0.3) unstable; urgency=medium
+
+  * Add OPC command to exit epilepsia
+  * Update systemd service to shutdown beaglebone when epilepsia exits
+
+ -- Simon <fyhertz@gmail.com>  Sun, 31 Dec 2023 00:41:01 +0100
+
 epilepsia (0.2) unstable; urgency=medium
 
   * bug fix when saving settings
